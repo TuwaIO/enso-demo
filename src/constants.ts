@@ -1,1 +1,2 @@
-export const COUNTER_ADDRESS = '0xAe7f46914De82028eCB7E2bF97Feb3D3dDCc2BAB';
+// Application constants
+// Add your constants here

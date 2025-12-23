@@ -1,25 +1,12 @@
 import { Transaction } from '@tuwaio/pulsar-core';
 
-import { wagmiConfig } from '@/configs/appConfig';
-import { increment } from '@/transactions/evm/increment';
+// Transaction actions will be defined here
+export const txActions = {};
 
-import { incrementGelato } from './evm/incrementGelato';
-
-export const txActions = {
-  incrementEvm: () => increment({ wagmiConfig }),
-  incrementGelato: () => incrementGelato(),
-};
-
+// Transaction types enum
 export enum TxType {
-  increment = 'increment',
+  // Add your transaction types here
 }
 
-type IncrementTx = Transaction & {
-  type: TxType.increment;
-  payload: {
-    contractAddress: string;
-    value: number;
-  };
-};
-
-export type TransactionUnion = IncrementTx;
+// Transaction union type
+export type TransactionUnion = Transaction;
