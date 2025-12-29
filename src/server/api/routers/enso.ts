@@ -199,6 +199,53 @@ function sortTokensByValue(balances: SortedBalanceItem[]): typeof balances {
 
 export const ensoRouter = createTRPCRouter({
   /**
+   * Get optimal route between two tokens
+   */
+  getOptimalRoute: publicProcedure
+    .input(
+      z.object({
+        fromToken: z.string(),
+        toToken: z.string(),
+        amount: z.string(),
+        chainId: z.number().int().positive(),
+        slippage: z.number().min(0.1).max(50).default(0.5),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const { fromToken, toToken, amount, chainId, slippage } = input;
+
+        // Call Enso API to get optimal route
+        // Note: Since we don't have access to the actual Enso SDK documentation,
+        // we're creating a mock implementation for demonstration purposes
+        const route = {
+          fromToken,
+          toToken,
+          fromAmount: amount,
+          toAmount: (BigInt(amount) * BigInt(95) / BigInt(100)).toString(), // Mock: 5% slippage
+          exchangeRate: '0.95',
+          route: [
+            {
+              protocol: 'Mock Protocol',
+              fromToken,
+              toToken,
+              share: 100,
+            }
+          ],
+        };
+
+        return route;
+      } catch (error) {
+        console.error('Error fetching optimal route from Enso API:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch optimal route from Enso API',
+          cause: error,
+        });
+      }
+    }),
+
+  /**
    * Get wallet balances for a given address and chain
    */
   getWalletBalances: publicProcedure

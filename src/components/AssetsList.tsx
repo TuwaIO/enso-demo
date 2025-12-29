@@ -3,6 +3,7 @@
 import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 import { SortedBalanceItem } from '@/server/api/routers/enso';
 
@@ -13,12 +14,18 @@ interface AssetsListProps {
 }
 
 export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
+  const router = useRouter();
+
   const calculateTotalBalance = () => {
     if (!assets || assets.length === 0) return 0;
     return assets.reduce((sum, t) => sum + t.usdValue, 0);
   };
 
   const totalBalanceUSD = calculateTotalBalance();
+
+  const handleAssetClick = (asset: SortedBalanceItem) => {
+    router.push(`/exchange?from=${asset.token}`);
+  };
 
   // Show loading state
   if (isLoading) {
@@ -85,6 +92,7 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             className="flex items-center gap-4 p-4 rounded-lg bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-muted)] transition-colors cursor-pointer"
+            onClick={() => handleAssetClick(asset)}
           >
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white font-bold">
               <Web3Icon symbol={asset.symbol} className="w-full h-full" />
