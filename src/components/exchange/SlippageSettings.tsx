@@ -16,7 +16,7 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
       <div className="flex justify-between items-center mb-2">
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="text-sm font-medium text-[var(--tuwa-text-secondary)] flex items-center gap-1"
+          className="text-sm font-medium text-[var(--tuwa-text-secondary)] flex items-center gap-1 cursor-pointer"
         >
           <CogIcon className="w-4 h-4" />
           Slippage Tolerance
@@ -29,15 +29,15 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
           <input
             type="range"
             min="0.1"
-            max="5"
-            step="0.1"
+            max="1"
+            step="0.05"
             value={slippage}
             onChange={onSlippageChange}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-[var(--tuwa-text-tertiary)]">
             <span>0.1%</span>
-            <span>5%</span>
+            <span>1%</span>
           </div>
         </div>
       )}

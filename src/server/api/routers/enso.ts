@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 
-import { getOptimalRoute, getWalletBalances } from '../utils/ensoClient';
+import { getOptimalRoute, getTokens, getWalletBalances } from '../utils/ensoClient';
 import { enrichTokens, logPortfolioStats } from '../utils/tokenEnrichment';
 import { filterLegitimateTokens } from '../utils/tokenFilters';
 import { sortTokensByValue } from '../utils/tokenQuality';
@@ -86,5 +86,34 @@ export const ensoRouter = createTRPCRouter({
     .query(async ({ input }) => {
       // Use the utility function to get wallet balances
       return getWalletBalances(input.address, input.chainId);
+    }),
+
+  /**
+   * Get list of tokens for a given chain
+   */
+  getTokensList: publicProcedure
+    .input(
+      z.object({
+        chainId: z.number().int().positive(),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const { chainId } = input;
+
+        // Fetch tokens from Enso API
+        const tokens = await getTokens(chainId);
+
+        console.log(`\n🔍 Fetched ${tokens.length} tokens from Enso API...`);
+
+        return tokens;
+      } catch (error) {
+        console.error('Error fetching tokens:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch tokens from Enso API',
+          cause: error,
+        });
+      }
     }),
 });

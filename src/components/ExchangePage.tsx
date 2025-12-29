@@ -176,45 +176,45 @@ export default function ExchangePage() {
   return (
     <div className="w-full flex justify-center items-start bg-gradient-to-br from-[var(--tuwa-bg-secondary)] to-[var(--tuwa-bg-muted)] gap-4 flex-wrap relative min-h-[calc(100dvh-65px)] pt-8">
       {/* Token Selection Modals */}
-      {balances && (
-        <>
-          <TokenSelectModal
-            isOpen={isSelectingFromToken}
-            onClose={() => setIsSelectingFromToken(false)}
-            tokens={balances}
-            onSelectToken={(token) => {
-              setFromToken(token);
-              // If the selected token is the same as the to token, swap them
-              if (toToken && token.token === toToken.token) {
-                setToToken(fromToken);
-              }
-              // If we have both tokens and an amount, refetch the route
-              if (toToken && fromAmount) {
-                refetchOptimalRoute();
-              }
-            }}
-            selectedTokenAddress={fromToken?.token}
-          />
+      <>
+        <TokenSelectModal
+          isOpen={isSelectingFromToken}
+          onClose={() => setIsSelectingFromToken(false)}
+          tokens={balances || []}
+          chainId={chainId}
+          onSelectToken={(token) => {
+            setFromToken(token);
+            // If the selected token is the same as the to token, swap them
+            if (toToken && token.token === toToken.token) {
+              setToToken(fromToken);
+            }
+            // If we have both tokens and an amount, refetch the route
+            if (toToken && fromAmount) {
+              refetchOptimalRoute();
+            }
+          }}
+          selectedTokenAddress={fromToken?.token}
+        />
 
-          <TokenSelectModal
-            isOpen={isSelectingToToken}
-            onClose={() => setIsSelectingToToken(false)}
-            tokens={balances}
-            onSelectToken={(token) => {
-              setToToken(token);
-              // If the selected token is the same as the from token, swap them
-              if (fromToken && token.token === fromToken.token) {
-                setFromToken(toToken);
-              }
-              // If we have both tokens and an amount, refetch the route
-              if (fromToken && fromAmount) {
-                refetchOptimalRoute();
-              }
-            }}
-            selectedTokenAddress={toToken?.token}
-          />
-        </>
-      )}
+        <TokenSelectModal
+          isOpen={isSelectingToToken}
+          onClose={() => setIsSelectingToToken(false)}
+          tokens={balances || []}
+          chainId={chainId}
+          onSelectToken={(token) => {
+            setToToken(token);
+            // If the selected token is the same as the from token, swap them
+            if (fromToken && token.token === fromToken.token) {
+              setFromToken(toToken);
+            }
+            // If we have both tokens and an amount, refetch the route
+            if (fromToken && fromAmount) {
+              refetchOptimalRoute();
+            }
+          }}
+          selectedTokenAddress={toToken?.token}
+        />
+      </>
 
       <div className="p-4 w-full max-w-md">
         <div className="bg-[var(--tuwa-bg-primary)] rounded-2xl shadow-2xl border border-[var(--tuwa-border-primary)] overflow-hidden">
@@ -230,6 +230,7 @@ export default function ExchangePage() {
             slippage={slippage}
             isLoadingRoute={isLoadingRoute}
             walletConnected={!!walletAddress}
+            route={optimalRoute?.route}
             onFromAmountChange={handleFromAmountChange}
             onToAmountChange={handleToAmountChange}
             onSlippageChange={handleSlippageChange}

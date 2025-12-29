@@ -20,3 +20,16 @@ export type SortedBalanceItem = BalanceItem & {
   usdValue: number;
   formattedUsdValue: string;
 };
+
+/**
+ * Represents a token item from the Enso API tokens endpoint
+ */
+export type TokenItem = {
+  address: string;
+  chainId: number;
+  decimals: number;
+  name: string;
+  symbol: string;
+  logoURI?: string;
+  tags?: string[];
+};

@@ -16,6 +16,7 @@ interface ExchangeFormProps {
   slippage: string;
   isLoadingRoute: boolean;
   walletConnected: boolean;
+  route?: { name: string }[];
   onFromAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onToAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSlippageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -34,6 +35,7 @@ export function ExchangeForm({
   slippage,
   isLoadingRoute,
   walletConnected,
+  route,
   onFromAmountChange,
   onToAmountChange,
   onSlippageChange,
@@ -57,7 +59,7 @@ export function ExchangeForm({
         onSelectToken={onSelectFromToken}
         rightLabel={
           fromToken && (
-            <button onClick={onMaxAmount} className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline">
+            <button onClick={onMaxAmount} className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline cursor-pointer">
               Max: {fromToken.formattedBalance.toFixed(6)}
             </button>
           )
@@ -84,6 +86,7 @@ export function ExchangeForm({
           fromAmount={fromAmount}
           toAmount={toAmount}
           isLoading={isLoadingRoute}
+          route={route}
         />
       )}
 

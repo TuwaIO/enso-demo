@@ -39,7 +39,7 @@ export function TokenInput({
           className="flex-1 p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)] disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <button
-          className="min-w-[120px] p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-primary)] flex items-center justify-center gap-2"
+          className="min-w-[120px] p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-primary)] flex items-center justify-center gap-2 cursor-pointer"
           onClick={onSelectToken}
         >
           {token ? token.symbol : 'Select Token'}

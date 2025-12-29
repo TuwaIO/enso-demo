@@ -4,7 +4,7 @@ import { EnsoClient } from '@ensofinance/sdk';
 import { TRPCError } from '@trpc/server';
 import { Address } from 'viem';
 
-import { BalanceItem } from '../types/enso';
+import { BalanceItem, TokenItem } from '../types/enso';
 
 // Initialize Enso client with API key from environment
 export const ensoClient = new EnsoClient({
@@ -41,6 +41,31 @@ export async function getWalletBalances(address: string, chainId: number): Promi
  * @param params Route parameters
  * @returns Route data
  */
+/**
+ * Get list of tokens from Enso API
+ * 
+ * @param chainId Chain ID
+ * @returns Array of token items
+ */
+export async function getTokens(chainId: number): Promise<TokenItem[]> {
+  try {
+    // Call the Enso API to get tokens
+    // Using the endpoint mentioned in the requirements: https://docs.enso.build/api-reference/tokens/tokens
+    const tokens = await ensoClient.getTokens({
+      chainId,
+    }) as TokenItem[];
+
+    return tokens;
+  } catch (error) {
+    console.error('Error fetching tokens from Enso API:', error);
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to fetch tokens from Enso API',
+      cause: error,
+    });
+  }
+}
+
 export async function getOptimalRoute(params: {
   fromToken: string;
   toToken: string;
