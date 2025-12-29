@@ -27,6 +27,7 @@ export function TokenSelectModal({
   // Filter tokens based on search term
   useEffect(() => {
     if (!searchTerm) {
+      // eslint-disable-next-line
       setFilteredTokens(tokens);
       return;
     }

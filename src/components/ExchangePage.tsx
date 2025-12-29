@@ -2,7 +2,7 @@
 
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { SortedBalanceItem } from '@/server/api/types/enso';
@@ -13,7 +13,6 @@ import { ExchangeHeader } from './exchange/ExchangeHeader';
 import { TokenSelectModal } from './TokenSelectModal';
 
 export default function ExchangePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
 
@@ -26,7 +25,6 @@ export default function ExchangePage() {
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState('0.5');
-  const [showSlippageSettings, setShowSlippageSettings] = useState(false);
 
   // State for token selection modal
   const [isSelectingFromToken, setIsSelectingFromToken] = useState(false);
@@ -45,7 +43,7 @@ export default function ExchangePage() {
   const chainId = isEVMWallet ? Number(activeConnection?.chainId ?? 1) : 1;
 
   // Fetch wallet balances
-  const { data: balances, isLoading: isLoadingBalances } = api.enso.getWalletBalances.useQuery(
+  const { data: balances } = api.enso.getWalletBalances.useQuery(
     {
       address: walletAddress,
       chainId,
@@ -60,7 +58,7 @@ export default function ExchangePage() {
   // Set initial from token based on URL param
   useEffect(() => {
     if (balances && fromTokenAddress && !fromToken) {
-      const token = balances.find((token) => token.token.toLowerCase() === fromTokenAddress.toLowerCase());
+      const token = balances.find((t) => t.token.toLowerCase() === fromTokenAddress.toLowerCase());
       if (token) {
         setFromToken(token);
       }
@@ -88,9 +86,10 @@ export default function ExchangePage() {
       amount: fromAmount ? (parseFloat(fromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString() : '0',
       chainId,
       slippage: parseFloat(slippage),
+      fromAddress: walletAddress,
     },
     {
-      enabled: !!fromToken && !!toToken && !!fromAmount && parseFloat(fromAmount) > 0,
+      enabled: !!fromToken && !!toToken && !!fromAmount && parseFloat(fromAmount) > 0 && !!walletAddress,
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -101,9 +100,12 @@ export default function ExchangePage() {
     if (optimalRoute && optimalRoute.toAmount && toToken) {
       // Convert the toAmount from wei to the token's decimal representation
       const convertedAmount = (Number(optimalRoute.toAmount) / Math.pow(10, toToken.decimals || 18)).toString();
-      setToAmount(convertedAmount);
+      if (toAmount !== convertedAmount) {
+        // eslint-disable-next-line
+        setToAmount(convertedAmount);
+      }
     }
-  }, [optimalRoute, toToken]);
+  }, [optimalRoute, toToken, toAmount]);
 
   // Handle from amount change
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,20 +159,18 @@ export default function ExchangePage() {
       return;
     }
 
-    // In a real application, you would:
-    // 1. Call a smart contract to execute the swap
-    // 2. Show a loading state while the transaction is pending
-    // 3. Show a success message when the transaction is complete
+    console.log('🚀 READY FOR PULSAR TRANSACTION 🚀');
+    console.log('-----------------------------------');
+    console.log('From Token:', fromToken);
+    console.log('To Token:', toToken);
+    console.log('Amount In:', fromAmount);
+    console.log('Amount Out:', toAmount);
+    console.log('Slippage:', slippage);
+    console.log('Route Data:', optimalRoute);
+    console.log('TX Data for Pulsar:', optimalRoute.tx);
+    console.log('-----------------------------------');
 
-    // For this demo, we'll just show the route details
-    alert(
-      `Exchange Summary:\n\n` +
-        `From: ${fromAmount} ${fromToken.symbol}\n` +
-        `To: ${toAmount} ${toToken.symbol}\n` +
-        `Rate: 1 ${fromToken.symbol} = ${(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} ${toToken.symbol}\n` +
-        `Slippage Tolerance: ${slippage}%\n\n` +
-        `This is a demo. In a real application, this would execute the swap.`,
-    );
+    alert('Check console for transaction data!');
   };
 
   return (
