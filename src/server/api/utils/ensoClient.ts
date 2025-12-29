@@ -36,26 +36,44 @@ export async function getWalletBalances(address: string, chainId: number): Promi
 }
 
 /**
- * Get optimal route between two tokens
- *
- * @param params Route parameters
- * @returns Route data
- */
-/**
  * Get list of tokens from Enso API
- * 
+ *
  * @param chainId Chain ID
  * @returns Array of token items
  */
 export async function getTokens(chainId: number): Promise<TokenItem[]> {
   try {
-    // Call the Enso API to get tokens
-    // Using the endpoint mentioned in the requirements: https://docs.enso.build/api-reference/tokens/tokens
-    const tokens = await ensoClient.getTokens({
-      chainId,
-    }) as TokenItem[];
+    const apiKey = process.env.ENSO_API_KEY;
+    if (!apiKey) {
+      throw new Error('ENSO_API_KEY is not configured');
+    }
 
-    return tokens;
+    // Call the Enso API to get tokens
+    // Using the endpoint: https://docs.enso.build/api-reference/tokens/tokens
+    const response = await fetch(
+      `https://api.enso.build/api/v1/tokens?pageSize=1000&includeUnderlying=true&chainId=${chainId}&includeMetadata=true`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Enso API error: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to fetch tokens: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // The API returns an array of tokens directly
+    const tokens = Array.isArray(data) ? data : data.data || [];
+    console.log(`✅ Fetched ${tokens.length} tokens from Enso API for chainId ${chainId}`);
+    return tokens as TokenItem[];
   } catch (error) {
     console.error('Error fetching tokens from Enso API:', error);
     throw new TRPCError({

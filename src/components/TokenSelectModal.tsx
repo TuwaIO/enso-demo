@@ -2,20 +2,10 @@
 
 import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { SortedBalanceItem, TokenItem } from '@/server/api/types/enso';
+import { DisplayToken, SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
-
-// Type for displaying tokens in the modal
-type DisplayToken = {
-  address: string;
-  symbol: string;
-  name: string;
-  logoUri?: string | null;
-  balance?: string;
-  usdValue?: string;
-};
 
 interface TokenSelectModalProps {
   isOpen: boolean;
@@ -35,81 +25,69 @@ export function TokenSelectModal({
   chainId,
 }: TokenSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [displayTokens, setDisplayTokens] = useState<DisplayToken[]>([]);
-  const [filteredTokens, setFilteredTokens] = useState<DisplayToken[]>([]);
 
   // Fetch tokens from API
   const { data: apiTokens, isLoading: isLoadingTokens } = api.enso.getTokensList.useQuery(
     { chainId },
-    { enabled: isOpen, refetchOnWindowFocus: false }
+    { enabled: isOpen, refetchOnWindowFocus: false },
   );
 
-  // Convert wallet tokens to display format
-  useEffect(() => {
-    if (!tokens) return;
-
-    const walletTokensFormatted: DisplayToken[] = tokens.map(token => ({
-      address: token.token,
-      symbol: token.symbol,
-      name: token.name,
-      logoUri: token.logoUri,
-      balance: token.formattedBalance.toFixed(4),
-      usdValue: token.formattedUsdValue
-    }));
-
-    setDisplayTokens(walletTokensFormatted);
-  }, [tokens]);
-
-  // Merge API tokens with wallet tokens when API data is loaded
-  useEffect(() => {
-    if (!apiTokens) return;
+  // Memoized display tokens to avoid re-computation
+  const displayTokens = useMemo<DisplayToken[]>(() => {
+    if (!apiTokens) return [];
 
     // Create a map of wallet tokens by address for quick lookup
-    const walletTokensMap = new Map<string, DisplayToken>();
-    displayTokens.forEach(token => {
-      walletTokensMap.set(token.address.toLowerCase(), token);
+    const walletTokensMap = new Map<string, SortedBalanceItem>();
+    tokens.forEach((token) => {
+      walletTokensMap.set(token.token.toLowerCase(), token);
     });
 
     // Convert API tokens to display format, merging with wallet tokens if they exist
-    const allTokens: DisplayToken[] = apiTokens.map(token => {
-      const walletToken = walletTokensMap.get(token.address.toLowerCase());
+    const allTokens: DisplayToken[] = apiTokens.map((apiToken) => {
+      const walletToken = walletTokensMap.get(apiToken.address.toLowerCase());
+      const hasBalance = !!walletToken && walletToken.formattedBalance > 0;
 
       return {
-        address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        logoUri: token.logoURI,
-        balance: walletToken?.balance || '0',
-        usdValue: walletToken?.usdValue || '$0.00'
+        address: apiToken.address,
+        chainId: apiToken.chainId,
+        decimals: apiToken.decimals,
+        symbol: apiToken.symbol,
+        name: apiToken.name,
+        logoURI: apiToken.logosUri?.length ? apiToken.logosUri[0] : '',
+        balance: hasBalance ? walletToken.formattedBalance.toFixed(4) : '0.0000',
+        usdValue: hasBalance ? walletToken.formattedUsdValue : '$0.00',
+        hasBalance,
       };
     });
 
-    setDisplayTokens(allTokens);
-  }, [apiTokens, displayTokens]);
+    // Sort tokens: wallet tokens with balance first, then by symbol
+    return allTokens.sort((a, b) => {
+      if (a.hasBalance !== b.hasBalance) {
+        return b.hasBalance ? 1 : -1; // Tokens with balance first
+      }
+      return a.symbol.localeCompare(b.symbol); // Then alphabetically
+    });
+  }, [apiTokens, tokens]);
 
   // Filter tokens based on search term
-  useEffect(() => {
+  const filteredTokens = useMemo(() => {
     if (!searchTerm) {
-      setFilteredTokens(displayTokens);
-      return;
+      return displayTokens;
     }
 
     const term = searchTerm.toLowerCase();
-    const filtered = displayTokens.filter(
+    return displayTokens.filter(
       (token) =>
         token.symbol.toLowerCase().includes(term) ||
         token.name.toLowerCase().includes(term) ||
         token.address.toLowerCase().includes(term),
     );
-    setFilteredTokens(filtered);
   }, [searchTerm, displayTokens]);
-
-  if (!isOpen) return null;
 
   // Helper function to convert DisplayToken back to SortedBalanceItem
   const convertToSortedBalanceItem = (displayToken: DisplayToken): SortedBalanceItem => {
     // Find the original token in the wallet tokens if it exists
-    const walletToken = tokens.find(t => t.token.toLowerCase() === displayToken.address.toLowerCase());
+    const walletToken = tokens.find((t) => t.token.toLowerCase() === displayToken.address.toLowerCase());
 
     if (walletToken) {
       return walletToken;
@@ -119,17 +97,19 @@ export function TokenSelectModal({
     return {
       token: displayToken.address,
       amount: '0',
-      chainId,
-      decimals: 18, // Default to 18 decimals
+      chainId: displayToken.chainId,
+      decimals: displayToken.decimals,
       price: 0,
       name: displayToken.name,
       symbol: displayToken.symbol,
-      logoUri: displayToken.logoUri,
+      logoUri: displayToken.logoURI || null,
       formattedBalance: 0,
       usdValue: 0,
-      formattedUsdValue: '$0.00'
+      formattedUsdValue: '$0.00',
     };
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -171,21 +151,42 @@ export function TokenSelectModal({
                   onClose();
                 }}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tuwa-bg-secondary)] transition-colors cursor-pointer ${
-                  token.address.toLowerCase() === selectedTokenAddress?.toLowerCase() ? 'bg-[var(--tuwa-bg-secondary)]' : ''
+                  token.address.toLowerCase() === selectedTokenAddress?.toLowerCase()
+                    ? 'bg-[var(--tuwa-bg-secondary)]'
+                    : ''
                 }`}
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white">
                   <Web3Icon symbol={token.symbol} className="w-full h-full" />
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-medium text-[var(--tuwa-text-primary)]">{token.symbol}</div>
-                  <div className="text-xs text-[var(--tuwa-text-secondary)]">{token.name}</div>
+                  <div className="font-medium text-[var(--tuwa-text-primary)]">
+                    {token.symbol}
+                    {token.hasBalance && (
+                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                        In Wallet
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-[var(--tuwa-text-secondary)] truncate">{token.name}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-sm text-[var(--tuwa-text-primary)]">
+                  <div
+                    className={`font-mono text-sm ${
+                      token.hasBalance
+                        ? 'text-[var(--tuwa-text-primary)] font-semibold'
+                        : 'text-[var(--tuwa-text-tertiary)]'
+                    }`}
+                  >
                     {token.balance}
                   </div>
-                  <div className="text-xs text-[var(--tuwa-text-tertiary)]">{token.usdValue}</div>
+                  <div
+                    className={`text-xs ${
+                      token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]'
+                    }`}
+                  >
+                    {token.usdValue}
+                  </div>
                 </div>
               </button>
             ))

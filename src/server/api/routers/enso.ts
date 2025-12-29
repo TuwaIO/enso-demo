@@ -100,18 +100,12 @@ export const ensoRouter = createTRPCRouter({
     .query(async ({ input }) => {
       try {
         const { chainId } = input;
-
-        // Fetch tokens from Enso API
-        const tokens = await getTokens(chainId);
-
-        console.log(`\n🔍 Fetched ${tokens.length} tokens from Enso API...`);
-
-        return tokens;
+        return await getTokens(chainId);
       } catch (error) {
-        console.error('Error fetching tokens:', error);
+        console.error('Error in getTokens tRPC handler:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch tokens from Enso API',
+          message: 'Failed to fetch tokens',
           cause: error,
         });
       }

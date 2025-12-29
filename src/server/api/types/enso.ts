@@ -1,3 +1,5 @@
+import { Address } from 'viem';
+
 /**
  * Represents a token balance item from the Enso API response
  */
@@ -30,6 +32,33 @@ export type TokenItem = {
   decimals: number;
   name: string;
   symbol: string;
+  logosUri?: string[];
+};
+
+/**
+ * Display token type for UI components - combines API tokens with wallet balance data
+ */
+export type DisplayToken = {
+  address: string;
+  chainId: number;
+  decimals: number;
+  name: string;
+  symbol: string;
   logoURI?: string;
-  tags?: string[];
+  balance: string;
+  usdValue: string;
+  hasBalance: boolean; // Indicates if this token is in user's wallet
+};
+
+export type Hop = {
+  tokenIn: Address[];
+  tokenOut: Address[];
+  protocol: string;
+  action: string;
+  primary: Address;
+  internalRoutes: string[];
+  args: Record<string, any>;
+  chainId: number;
+  sourceChainId?: number;
+  destinationChainId?: number;
 };

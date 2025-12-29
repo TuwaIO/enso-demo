@@ -1,12 +1,14 @@
 'use client';
 
+import { Hop } from '@/server/api/types/enso';
+
 interface ExchangeRateProps {
   fromSymbol: string;
   toSymbol: string;
   fromAmount: string;
   toAmount: string;
   isLoading: boolean;
-  route?: { name: string }[];
+  route?: Hop[];
 }
 
 export function ExchangeRate({ fromSymbol, toSymbol, fromAmount, toAmount, isLoading, route }: ExchangeRateProps) {
@@ -37,7 +39,7 @@ export function ExchangeRate({ fromSymbol, toSymbol, fromAmount, toAmount, isLoa
             {route.map((step, index) => (
               <span key={index} className="flex items-center">
                 {index > 0 && <span className="mx-1">→</span>}
-                <span className="px-2 py-1 rounded-md bg-[var(--tuwa-bg-muted)]">{step.name}</span>
+                <span className="px-2 py-1 rounded-md bg-[var(--tuwa-bg-muted)]">{step.action}</span>
               </span>
             ))}
           </div>

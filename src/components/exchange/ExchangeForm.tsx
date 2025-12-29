@@ -1,6 +1,6 @@
 'use client';
 
-import { SortedBalanceItem } from '@/server/api/types/enso';
+import { Hop, SortedBalanceItem } from '@/server/api/types/enso';
 
 import { ExchangeButton } from './ExchangeButton';
 import { ExchangeRate } from './ExchangeRate';
@@ -16,7 +16,7 @@ interface ExchangeFormProps {
   slippage: string;
   isLoadingRoute: boolean;
   walletConnected: boolean;
-  route?: { name: string }[];
+  route?: Hop[];
   onFromAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onToAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSlippageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -59,7 +59,10 @@ export function ExchangeForm({
         onSelectToken={onSelectFromToken}
         rightLabel={
           fromToken && (
-            <button onClick={onMaxAmount} className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline cursor-pointer">
+            <button
+              onClick={onMaxAmount}
+              className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline cursor-pointer"
+            >
               Max: {fromToken.formattedBalance.toFixed(6)}
             </button>
           )
