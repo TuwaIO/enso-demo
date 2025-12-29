@@ -24,6 +24,8 @@ type BalanceItem = {
   logoUri: string | null;
 };
 
+export type SortedBalanceItem = BalanceItem & { formattedBalance: number; usdValue: number; formattedUsdValue: string };
+
 /**
  * Filter function to identify legitimate tokens and filter out scam/spam tokens
  */
@@ -170,9 +172,7 @@ function calculateTokenQuality(token: BalanceItem & { formattedBalance: number; 
 /**
  * Sort tokens by quality score, USD value, then alphabetically
  */
-function sortTokensByValue(
-  balances: (BalanceItem & { formattedBalance: number; usdValue: number })[],
-): typeof balances {
+function sortTokensByValue(balances: SortedBalanceItem[]): typeof balances {
   return balances.sort((a, b) => {
     const qualityA = calculateTokenQuality(a);
     const qualityB = calculateTokenQuality(b);
