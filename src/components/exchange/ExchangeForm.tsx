@@ -1,6 +1,6 @@
 'use client';
 
-import { SortedBalanceItem } from '@/server/api/routers/enso';
+import { SortedBalanceItem } from '@/server/api/types/enso';
 
 import { ExchangeButton } from './ExchangeButton';
 import { ExchangeRate } from './ExchangeRate';
@@ -57,10 +57,7 @@ export function ExchangeForm({
         onSelectToken={onSelectFromToken}
         rightLabel={
           fromToken && (
-            <button
-              onClick={onMaxAmount}
-              className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline"
-            >
+            <button onClick={onMaxAmount} className="text-xs text-[var(--tuwa-button-gradient-from)] hover:underline">
               Max: {fromToken.formattedBalance.toFixed(6)}
             </button>
           )
@@ -94,11 +91,7 @@ export function ExchangeForm({
       <SlippageSettings slippage={slippage} onSlippageChange={onSlippageChange} />
 
       {/* Exchange Button */}
-      <ExchangeButton
-        onExchange={onExchange}
-        disabled={isExchangeDisabled}
-        walletConnected={walletConnected}
-      />
+      <ExchangeButton onExchange={onExchange} disabled={isExchangeDisabled} walletConnected={walletConnected} />
     </div>
   );
 }

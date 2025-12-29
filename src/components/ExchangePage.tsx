@@ -5,7 +5,7 @@ import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { SortedBalanceItem } from '@/server/api/routers/enso';
+import { SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
 
 import { ExchangeForm } from './exchange/ExchangeForm';

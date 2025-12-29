@@ -5,7 +5,7 @@ import { BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outl
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
-import { SortedBalanceItem } from '@/server/api/routers/enso';
+import { SortedBalanceItem } from '@/server/api/types/enso';
 
 interface AssetsListProps {
   assets: SortedBalanceItem[] | undefined;

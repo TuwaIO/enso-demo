@@ -4,7 +4,7 @@ import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react';
 
-import { SortedBalanceItem } from '@/server/api/routers/enso';
+import { SortedBalanceItem } from '@/server/api/types/enso';
 
 interface TokenSelectModalProps {
   isOpen: boolean;
@@ -36,7 +36,7 @@ export function TokenSelectModal({
       (token) =>
         token.symbol.toLowerCase().includes(term) ||
         token.name.toLowerCase().includes(term) ||
-        token.token.toLowerCase().includes(term)
+        token.token.toLowerCase().includes(term),
     );
     setFilteredTokens(filtered);
   }, [searchTerm, tokens]);

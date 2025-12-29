@@ -1,7 +1,8 @@
 'use client';
 
-import { SortedBalanceItem } from '@/server/api/routers/enso';
 import React from 'react';
+
+import { SortedBalanceItem } from '@/server/api/types/enso';
 
 interface TokenInputProps {
   label: string;
