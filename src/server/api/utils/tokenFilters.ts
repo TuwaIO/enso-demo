@@ -42,16 +42,16 @@ export function filterLegitimateTokens(balances: BalanceItem[]): BalanceItem[] {
     const balance = Number(token.amount) / Math.pow(10, token.decimals);
     const usdValue = balance * token.price;
 
-    // Filter 1: STRICT PRICE CHECK - Must have price > 0
+    // Filter 1: PRICE CHECK - Allow tokens with zero price but log them
     if (token.price <= 0) {
-      console.log(`Filtering out token ${token.symbol} - price: ${token.price}`);
-      return false;
+      console.log(`Token ${token.symbol} has zero price: ${token.price}, but keeping it for display`);
+      // We'll keep tokens with zero price for display purposes
     }
 
-    // Filter 2: Must have meaningful balance (not zero or extremely tiny)
+    // Filter 2: Allow tokens with zero balance for selection purposes
     if (balance <= 0) {
-      console.log(`Filtering out token ${token.symbol} - zero balance`);
-      return false;
+      console.log(`Token ${token.symbol} has zero balance, but keeping it for selection`);
+      // We'll keep tokens with zero balance for selection purposes
     }
 
     // Filter 3: Check for scam patterns in symbol

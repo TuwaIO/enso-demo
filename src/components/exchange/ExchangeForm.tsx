@@ -58,12 +58,7 @@ export function ExchangeForm({
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-2">
-        {/* Optional: Add Refresh Timer in header-like position or next to settings? 
-             Actually user asked for "indicator (loader) ... so we must add it".
-             Let's put it on top right or near ExchangeRate.
-         */}
-      </div>
+      {/* Removed empty div with comment */}
 
       {/* From Token */}
       <TokenInput

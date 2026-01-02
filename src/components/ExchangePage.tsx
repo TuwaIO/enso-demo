@@ -149,6 +149,15 @@ export default function ExchangePage() {
 
     // Debouncing could be added here
     if (fromToken && toToken && value && parseFloat(value) > 0) {
+      // Immediately estimate toAmount based on token prices while waiting for optimal route
+      const fromPrice = fromToken.price || 0;
+      const toPrice = toToken.price || 0;
+
+      if (fromPrice > 0 && toPrice > 0) {
+        const estimatedTo = (parseFloat(value) * fromPrice) / toPrice;
+        setToAmount(estimatedTo.toFixed(6)); // Limit decimals to avoid crazy longs
+      }
+
       // Allow UI to update first, then refetch
       // React Query will refetch because key (amount) changed
     } else {

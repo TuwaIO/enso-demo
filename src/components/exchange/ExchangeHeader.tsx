@@ -16,17 +16,17 @@ export function ExchangeHeader({ title, subtitle = 'Powered by Enso Finance' }: 
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/')}
-          className="w-10 h-10 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          className="w-10 h-10 p-2 rounded-full bg-[var(--tuwa-bg-primary)]/20 hover:bg-[var(--tuwa-bg-primary)]/30 transition-colors"
           title="Back to Home"
         >
-          <ArrowLeftIcon className="w-full h-full text-white" />
+          <ArrowLeftIcon className="w-full h-full text-[var(--tuwa-bg-primary)]" />
         </button>
-        <div className="w-10 h-10 p-2 rounded-full bg-white/20">
-          <ArrowsRightLeftIcon className="w-full h-full text-white" />
+        <div className="w-10 h-10 p-2 rounded-full bg-[var(--tuwa-bg-primary)]/20">
+          <ArrowsRightLeftIcon className="w-full h-full text-[var(--tuwa-bg-primary)]" />
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="text-blue-100 text-sm">{subtitle}</p>
+          <h1 className="text-2xl font-bold text-[var(--tuwa-bg-primary)]">{title}</h1>
+          <p className="text-[var(--tuwa-bg-primary)]/80 text-sm">{subtitle}</p>
         </div>
       </div>
     </div>

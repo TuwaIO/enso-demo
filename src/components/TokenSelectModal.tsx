@@ -66,7 +66,7 @@ export function TokenSelectModal({
         name: apiToken.name,
         logoURI: apiToken.logosUri?.length ? apiToken.logosUri[0] : '',
         balance: hasBalance ? walletToken.formattedBalance.toFixed(4) : '0.0000',
-        usdValue: hasBalance ? walletToken.formattedUsdValue : '$0.00',
+        usdValue: hasBalance ? (walletToken.price > 0 ? walletToken.formattedUsdValue : 'Price N/A') : '$0.00',
         hasBalance,
       };
     });
