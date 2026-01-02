@@ -5,6 +5,7 @@ import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { appEVMChains } from '@/configs/appConfig';
 import { SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
 
@@ -25,6 +26,11 @@ export default function ExchangePage() {
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState('0.5');
+  const [recipientAddress, setRecipientAddress] = useState('');
+
+  // Cross-chain state
+  // Destination chain defaults to connected chain, but can be changed
+  const [destinationChainId, setDestinationChainId] = useState<number>(1);
 
   // State for token selection modal
   const [isSelectingFromToken, setIsSelectingFromToken] = useState(false);
@@ -41,6 +47,13 @@ export default function ExchangePage() {
 
   // Use the chain ID from the connected wallet if available, otherwise use Ethereum mainnet
   const chainId = isEVMWallet ? Number(activeConnection?.chainId ?? 1) : 1;
+
+  // Update destination chain when wallet chain changes (initially)
+  useEffect(() => {
+    if (chainId && destinationChainId === 1) {
+        setDestinationChainId(chainId);
+    }
+  }, [chainId, destinationChainId]);
 
   // Fetch wallet balances
   const { data: balances } = api.enso.getWalletBalances.useQuery(
@@ -67,11 +80,24 @@ export default function ExchangePage() {
 
   // Handle token swap
   const handleSwapTokens = () => {
-    const temp = fromToken;
+    const tempToken = fromToken;
+    const tempAmount = fromAmount;
+    
     setFromToken(toToken);
-    setToToken(temp);
+    setToToken(tempToken);
+    
+    // Swap amounts implies exact input becomes exact output which we don't fully support vertically without recalculation
+    // For now, keep "From" amount as the input driver if possible, or swap values
     setFromAmount(toAmount);
-    setToAmount(fromAmount);
+    setToAmount(tempAmount);
+
+    // If we are swapping across chains, we might need to swap chainIds too theoretically, 
+    // but source chain is locked to wallet. 
+    // If destination chain was different, we can't easily swap if source chain doesn't match wallet.
+    // So usually swap button is disabled or resets destination chain to current if cross-chain logic is strict.
+    // For this demo, let's just reset destination chain to current if it was different? 
+    // Or assume user wants to send back. But user can only send from connected chain.
+    setDestinationChainId(chainId);
   };
 
   // Get optimal route between tokens
@@ -84,14 +110,16 @@ export default function ExchangePage() {
       fromToken: fromToken?.token || '',
       toToken: toToken?.token || '',
       amount: fromAmount ? (parseFloat(fromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString() : '0',
-      chainId,
+      chainId, // Source chain
       slippage: parseFloat(slippage),
       fromAddress: walletAddress,
+      receiver: recipientAddress || undefined,
     },
     {
       enabled: !!fromToken && !!toToken && !!fromAmount && parseFloat(fromAmount) > 0 && !!walletAddress,
       retry: 1,
       refetchOnWindowFocus: false,
+      // Refetch automatically? We'll handle via explicit timer to be safe and efficient
     },
   );
 
@@ -100,34 +128,48 @@ export default function ExchangePage() {
     if (optimalRoute && optimalRoute.toAmount && toToken) {
       // Convert the toAmount from wei to the token's decimal representation
       const convertedAmount = (Number(optimalRoute.toAmount) / Math.pow(10, toToken.decimals || 18)).toString();
+      
+       // Using simple formatted string to avoid infinite loops if precision varies slightly
+       // Only update if significantly different or if toAmount was empty
       if (toAmount !== convertedAmount) {
-        // eslint-disable-next-line
-        setToAmount(convertedAmount);
+         // Check if user is currently editing "To" field? 
+         // Basic collision avoidance: if we just fetched a route strictly based on FromAmount, we update ToAmount.
+         setToAmount(convertedAmount);
       }
     }
-  }, [optimalRoute, toToken, toAmount]);
+  }, [optimalRoute, toToken]); // Removed intoAmount from dependency to avoid loop
 
   // Handle from amount change
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFromAmount(value);
 
-    // If we have both tokens, refetch the optimal route
+    // Debouncing could be added here
     if (fromToken && toToken && value && parseFloat(value) > 0) {
-      refetchOptimalRoute();
+       // Allow UI to update first, then refetch
+       // React Query will refetch because key (amount) changed
     } else {
       setToAmount('');
     }
   };
 
-  // Handle to amount change
+  // Handle to amount change (Bidirectional approximation)
   const handleToAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setToAmount(value);
 
-    // Note: For simplicity, we're not implementing reverse calculation
-    // In a real app, you would call a different API endpoint to calculate
-    // the fromAmount based on the toAmount
+    if (fromToken && toToken && value && parseFloat(value) > 0) {
+        // Approximate From Amount: ToAmount * (ToPrice / FromPrice)
+        // Price is usually in USD.
+        const fromPrice = fromToken.price || 0;
+        const toPrice = toToken.price || 0;
+
+        if (fromPrice > 0 && toPrice > 0) {
+            const estimatedFrom = (parseFloat(value) * toPrice) / fromPrice;
+            // setFromAmount triggers query update
+            setFromAmount(estimatedFrom.toFixed(6)); // Limit decimals to avoid crazy longs
+        }
+    }
   };
 
   // Handle slippage change
@@ -141,14 +183,6 @@ export default function ExchangePage() {
     if (fromToken) {
       const maxAmount = fromToken.formattedBalance.toString();
       setFromAmount(maxAmount);
-
-      // If we have both tokens, refetch the optimal route
-      if (toToken) {
-        // We need to wait for the state to update before refetching
-        setTimeout(() => {
-          refetchOptimalRoute();
-        }, 0);
-      }
     }
   };
 
@@ -166,6 +200,7 @@ export default function ExchangePage() {
     console.log('Amount In:', fromAmount);
     console.log('Amount Out:', toAmount);
     console.log('Slippage:', slippage);
+    console.log('Recipient:', recipientAddress || walletAddress);
     console.log('Route Data:', optimalRoute);
     console.log('TX Data for Pulsar:', optimalRoute.tx);
     console.log('-----------------------------------');
@@ -177,6 +212,7 @@ export default function ExchangePage() {
     <div className="w-full flex justify-center items-start bg-gradient-to-br from-[var(--tuwa-bg-secondary)] to-[var(--tuwa-bg-muted)] gap-4 flex-wrap relative min-h-[calc(100dvh-65px)] pt-8">
       {/* Token Selection Modals */}
       <>
+        {/* Source Token Selector: Filter by balance, Current Chain only */}
         <TokenSelectModal
           isOpen={isSelectingFromToken}
           onClose={() => setIsSelectingFromToken(false)}
@@ -184,35 +220,32 @@ export default function ExchangePage() {
           chainId={chainId}
           onSelectToken={(token) => {
             setFromToken(token);
-            // If the selected token is the same as the to token, swap them
             if (toToken && token.token === toToken.token) {
-              setToToken(fromToken);
-            }
-            // If we have both tokens and an amount, refetch the route
-            if (toToken && fromAmount) {
-              refetchOptimalRoute();
+              setToToken(null); // Clear destination if same token selected (unless cross chain)
             }
           }}
           selectedTokenAddress={fromToken?.token}
+          filterByBalance={true}
+          enableChainSelection={false} 
         />
 
+        {/* Destination Token Selector: All tokens, Chain Selection enabled */}
         <TokenSelectModal
           isOpen={isSelectingToToken}
           onClose={() => setIsSelectingToToken(false)}
-          tokens={balances || []}
-          chainId={chainId}
+          tokens={balances || []} // Note: sending tokens implies we pick from list of KNOWN tokens, API usually returns all tokens for a chain
+          chainId={destinationChainId}
           onSelectToken={(token) => {
             setToToken(token);
-            // If the selected token is the same as the from token, swap them
-            if (fromToken && token.token === fromToken.token) {
-              setFromToken(toToken);
-            }
-            // If we have both tokens and an amount, refetch the route
-            if (fromToken && fromAmount) {
-              refetchOptimalRoute();
+            if (fromToken && token.token === fromToken.token && chainId === destinationChainId) {
+              setFromToken(null);
             }
           }}
           selectedTokenAddress={toToken?.token}
+          filterByBalance={false}
+          enableChainSelection={true}
+          chains={appEVMChains}
+          onSelectChain={(newChainId) => setDestinationChainId(newChainId)}
         />
       </>
 
@@ -239,6 +272,9 @@ export default function ExchangePage() {
             onSwapTokens={handleSwapTokens}
             onMaxAmount={handleMaxAmount}
             onExchange={handleExchange}
+            recipientAddress={recipientAddress}
+            onRecipientChange={setRecipientAddress}
+            onRefresh={() => refetchOptimalRoute()}
           />
         </div>
       </div>
