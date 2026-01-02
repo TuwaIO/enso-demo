@@ -54,17 +54,17 @@ export function ExchangeForm({
   onRefresh,
 }: ExchangeFormProps) {
   // Determine if exchange button should be disabled
-  const isExchangeDisabled = !fromToken || !toToken || !fromAmount || !toAmount || (parseFloat(fromAmount) === 0);
+  const isExchangeDisabled = !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0;
 
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-2">
-         {/* Optional: Add Refresh Timer in header-like position or next to settings? 
+        {/* Optional: Add Refresh Timer in header-like position or next to settings? 
              Actually user asked for "indicator (loader) ... so we must add it".
              Let's put it on top right or near ExchangeRate.
          */}
       </div>
-      
+
       {/* From Token */}
       <TokenInput
         label="Sell"
@@ -75,8 +75,10 @@ export function ExchangeForm({
         rightLabel={
           fromToken && (
             <div className="flex items-center gap-2">
-               <span className="text-xs text-[var(--tuwa-text-secondary)]">Balance: {fromToken.formattedBalance.toFixed(4)}</span>
-               <button
+              <span className="text-xs text-[var(--tuwa-text-secondary)]">
+                Balance: {fromToken.formattedBalance.toFixed(4)}
+              </span>
+              <button
                 onClick={onMaxAmount}
                 className="text-xs text-[var(--tuwa-button-gradient-from)] hover:text-[var(--tuwa-button-gradient-to)] font-medium uppercase tracking-wide cursor-pointer"
               >
@@ -98,24 +100,26 @@ export function ExchangeForm({
         onAmountChange={onToAmountChange}
         onSelectToken={onSelectToToken}
         rightLabel={
-            toToken && (
-                <span className="text-xs text-[var(--tuwa-text-secondary)]">Balance: {toToken.formattedBalance.toFixed(4)}</span>
-            )
+          toToken && (
+            <span className="text-xs text-[var(--tuwa-text-secondary)]">
+              Balance: {toToken.formattedBalance.toFixed(4)}
+            </span>
+          )
         }
       />
 
       {/* Exchange Rate & Refresh */}
       {fromToken && toToken && (
         <div className="flex items-center justify-between mt-2 mb-4 bg-[var(--tuwa-bg-secondary)] p-2 rounded-lg border border-[var(--tuwa-border-primary)] border-dashed">
-            <ExchangeRate
+          <ExchangeRate
             fromSymbol={fromToken.symbol}
             toSymbol={toToken.symbol}
             fromAmount={fromAmount}
             toAmount={toAmount}
             isLoading={isLoadingRoute}
             route={route}
-            />
-            <RefreshTimer onRefresh={onRefresh} isLoading={isLoadingRoute} />
+          />
+          <RefreshTimer onRefresh={onRefresh} isLoading={isLoadingRoute} />
         </div>
       )}
 

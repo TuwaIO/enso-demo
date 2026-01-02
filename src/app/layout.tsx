@@ -19,9 +19,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Pulsar & Cosmos SDK: Next.js',
+  title: 'TUWA x Enso Finance | Wallet Assets & Token Exchange Demo',
   description:
-    'An example demonstrating the integration of Pulsar transaction tracking with a Next.js application using EVM adapter.',
+    'A comprehensive demo showcasing TUWA SDK integration with Enso Finance API. Features wallet asset tracking, token exchange, and real-time portfolio management powered by Nova Connect and Pulsar Engine.',
+  keywords: [
+    'TUWA',
+    'Enso Finance',
+    'DeFi',
+    'Token Exchange',
+    'Wallet Assets',
+    'Portfolio Management',
+    'Nova Connect',
+    'Pulsar Engine',
+    'Ethereum',
+    'EVM',
+    'Web3',
+    'Next.js',
+    'React',
+    'TypeScript',
+  ],
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',

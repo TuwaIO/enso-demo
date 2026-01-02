@@ -51,7 +51,8 @@ export default function ExchangePage() {
   // Update destination chain when wallet chain changes (initially)
   useEffect(() => {
     if (chainId && destinationChainId === 1) {
-        setDestinationChainId(chainId);
+      // eslint-disable-next-line
+      setDestinationChainId(chainId);
     }
   }, [chainId, destinationChainId]);
 
@@ -73,6 +74,7 @@ export default function ExchangePage() {
     if (balances && fromTokenAddress && !fromToken) {
       const token = balances.find((t) => t.token.toLowerCase() === fromTokenAddress.toLowerCase());
       if (token) {
+        // eslint-disable-next-line
         setFromToken(token);
       }
     }
@@ -82,20 +84,20 @@ export default function ExchangePage() {
   const handleSwapTokens = () => {
     const tempToken = fromToken;
     const tempAmount = fromAmount;
-    
+
     setFromToken(toToken);
     setToToken(tempToken);
-    
+
     // Swap amounts implies exact input becomes exact output which we don't fully support vertically without recalculation
     // For now, keep "From" amount as the input driver if possible, or swap values
     setFromAmount(toAmount);
     setToAmount(tempAmount);
 
-    // If we are swapping across chains, we might need to swap chainIds too theoretically, 
-    // but source chain is locked to wallet. 
+    // If we are swapping across chains, we might need to swap chainIds too theoretically,
+    // but source chain is locked to wallet.
     // If destination chain was different, we can't easily swap if source chain doesn't match wallet.
     // So usually swap button is disabled or resets destination chain to current if cross-chain logic is strict.
-    // For this demo, let's just reset destination chain to current if it was different? 
+    // For this demo, let's just reset destination chain to current if it was different?
     // Or assume user wants to send back. But user can only send from connected chain.
     setDestinationChainId(chainId);
   };
@@ -128,13 +130,14 @@ export default function ExchangePage() {
     if (optimalRoute && optimalRoute.toAmount && toToken) {
       // Convert the toAmount from wei to the token's decimal representation
       const convertedAmount = (Number(optimalRoute.toAmount) / Math.pow(10, toToken.decimals || 18)).toString();
-      
-       // Using simple formatted string to avoid infinite loops if precision varies slightly
-       // Only update if significantly different or if toAmount was empty
+
+      // Using simple formatted string to avoid infinite loops if precision varies slightly
+      // Only update if significantly different or if toAmount was empty
       if (toAmount !== convertedAmount) {
-         // Check if user is currently editing "To" field? 
-         // Basic collision avoidance: if we just fetched a route strictly based on FromAmount, we update ToAmount.
-         setToAmount(convertedAmount);
+        // Check if user is currently editing "To" field?
+        // Basic collision avoidance: if we just fetched a route strictly based on FromAmount, we update ToAmount.
+        // eslint-disable-next-line
+        setToAmount(convertedAmount);
       }
     }
   }, [optimalRoute, toToken]); // Removed intoAmount from dependency to avoid loop
@@ -146,8 +149,8 @@ export default function ExchangePage() {
 
     // Debouncing could be added here
     if (fromToken && toToken && value && parseFloat(value) > 0) {
-       // Allow UI to update first, then refetch
-       // React Query will refetch because key (amount) changed
+      // Allow UI to update first, then refetch
+      // React Query will refetch because key (amount) changed
     } else {
       setToAmount('');
     }
@@ -159,16 +162,16 @@ export default function ExchangePage() {
     setToAmount(value);
 
     if (fromToken && toToken && value && parseFloat(value) > 0) {
-        // Approximate From Amount: ToAmount * (ToPrice / FromPrice)
-        // Price is usually in USD.
-        const fromPrice = fromToken.price || 0;
-        const toPrice = toToken.price || 0;
+      // Approximate From Amount: ToAmount * (ToPrice / FromPrice)
+      // Price is usually in USD.
+      const fromPrice = fromToken.price || 0;
+      const toPrice = toToken.price || 0;
 
-        if (fromPrice > 0 && toPrice > 0) {
-            const estimatedFrom = (parseFloat(value) * toPrice) / fromPrice;
-            // setFromAmount triggers query update
-            setFromAmount(estimatedFrom.toFixed(6)); // Limit decimals to avoid crazy longs
-        }
+      if (fromPrice > 0 && toPrice > 0) {
+        const estimatedFrom = (parseFloat(value) * toPrice) / fromPrice;
+        // setFromAmount triggers query update
+        setFromAmount(estimatedFrom.toFixed(6)); // Limit decimals to avoid crazy longs
+      }
     }
   };
 
@@ -226,7 +229,7 @@ export default function ExchangePage() {
           }}
           selectedTokenAddress={fromToken?.token}
           filterByBalance={true}
-          enableChainSelection={false} 
+          enableChainSelection={false}
         />
 
         {/* Destination Token Selector: All tokens, Chain Selection enabled */}

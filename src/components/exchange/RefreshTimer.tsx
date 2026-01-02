@@ -15,9 +15,10 @@ export function RefreshTimer({ onRefresh, isLoading, intervalMs = 60000 }: Refre
 
   useEffect(() => {
     if (isLoading) {
-       setProgress(0); // Reset visual when loading
-       setTimeLeft(intervalMs);
-       return;
+      // eslint-disable-next-line
+      setProgress(0); // Reset visual when loading
+      setTimeLeft(intervalMs);
+      return;
     }
 
     const startTime = Date.now();
@@ -27,7 +28,7 @@ export function RefreshTimer({ onRefresh, isLoading, intervalMs = 60000 }: Refre
       const now = Date.now();
       const remaining = Math.max(0, endTime - now);
       const newProgress = (remaining / intervalMs) * 100;
-      
+
       setTimeLeft(remaining);
       setProgress(newProgress);
 
@@ -54,15 +55,8 @@ export function RefreshTimer({ onRefresh, isLoading, intervalMs = 60000 }: Refre
       <div className="relative w-4 h-4 flex items-center justify-center">
         {/* Background circle */}
         <svg className="w-full h-full -rotate-90">
-          <circle
-            cx="8"
-            cy="8"
-            r={radius}
-            fill="transparent"
-            stroke="var(--tuwa-border-primary)"
-            strokeWidth="2"
-          />
-           {/* Progress circle */}
+          <circle cx="8" cy="8" r={radius} fill="transparent" stroke="var(--tuwa-border-primary)" strokeWidth="2" />
+          {/* Progress circle */}
           <circle
             cx="8"
             cy="8"
@@ -73,11 +67,11 @@ export function RefreshTimer({ onRefresh, isLoading, intervalMs = 60000 }: Refre
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-             className={isLoading ? 'opacity-0' : 'transition-all duration-100 ease-linear'}
+            className={isLoading ? 'opacity-0' : 'transition-all duration-100 ease-linear'}
           />
         </svg>
-        <ArrowPathIcon 
-            className={`absolute w-2.5 h-2.5 text-[var(--tuwa-text-primary)] ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} 
+        <ArrowPathIcon
+          className={`absolute w-2.5 h-2.5 text-[var(--tuwa-text-primary)] ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`}
         />
       </div>
       <span className="text-[10px] font-mono text-[var(--tuwa-text-secondary)] w-8 text-right">

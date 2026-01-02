@@ -7,6 +7,7 @@ import { Chain } from 'viem/chains';
 
 import { DisplayToken, SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
+
 import { NetworkSelector } from './NetworkSelector';
 
 interface TokenSelectModalProps {
@@ -84,7 +85,7 @@ export function TokenSelectModal({
     let result = displayTokens;
 
     if (filterByBalance) {
-      result = result.filter(t => t.hasBalance);
+      result = result.filter((t) => t.hasBalance);
     }
 
     if (searchTerm) {
@@ -96,7 +97,7 @@ export function TokenSelectModal({
           token.address.toLowerCase().includes(term),
       );
     }
-    
+
     return result;
   }, [searchTerm, displayTokens, filterByBalance]);
 
@@ -144,12 +145,8 @@ export function TokenSelectModal({
         {/* Chain Selection (Optional) */}
         {enableChainSelection && chains.length > 0 && onSelectChain && (
           <div className="p-4 pb-0">
-             <div className="mb-2 text-xs font-medium text-[var(--tuwa-text-secondary)]">Network</div>
-             <NetworkSelector 
-                chains={chains} 
-                selectedChainId={chainId} 
-                onSelectChain={onSelectChain} 
-             />
+            <div className="mb-2 text-xs font-medium text-[var(--tuwa-text-secondary)]">Network</div>
+            <NetworkSelector chains={chains} selectedChainId={chainId} onSelectChain={onSelectChain} />
           </div>
         )}
 
@@ -170,62 +167,63 @@ export function TokenSelectModal({
             <div className="text-center py-8 text-[var(--tuwa-text-secondary)] animate-pulse">Loading tokens...</div>
           ) : filteredTokens.length === 0 ? (
             <div className="text-center py-8 text-[var(--tuwa-text-secondary)]">
-                {filterByBalance ? "No tokens with balance found" : "No tokens found"}
+              {filterByBalance ? 'No tokens with balance found' : 'No tokens found'}
             </div>
           ) : (
             <div className="space-y-1">
-            {filteredTokens.map((token) => (
-              <button
-                key={`${token.chainId}-${token.address}`}
-                onClick={() => {
-                  onSelectToken(convertToSortedBalanceItem(token));
-                  onClose();
-                }}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tuwa-bg-secondary)] transition-colors cursor-pointer group ${
-                  token.address.toLowerCase() === selectedTokenAddress?.toLowerCase()
-                    ? 'bg-[var(--tuwa-bg-secondary)]'
-                    : ''
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                  {token.logoURI ? (
-                     // eslint-disable-next-line @next/next/no-img-element
-                     <img src={token.logoURI} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                     <Web3Icon symbol={token.symbol} className="w-6 h-6" />
-                  )}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-[var(--tuwa-text-primary)] truncate">{token.symbol}</span>
-                    {token.hasBalance && (
-                      <span className="text-[10px] bg-green-500/10 text-green-500 px-1.5 py-0.5 rounded-full font-medium border border-green-500/20">
-                        Balance
-                      </span>
+              {filteredTokens.map((token) => (
+                <button
+                  key={`${token.chainId}-${token.address}`}
+                  onClick={() => {
+                    onSelectToken(convertToSortedBalanceItem(token));
+                    onClose();
+                  }}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tuwa-bg-secondary)] transition-colors cursor-pointer group ${
+                    token.address.toLowerCase() === selectedTokenAddress?.toLowerCase()
+                      ? 'bg-[var(--tuwa-bg-secondary)]'
+                      : ''
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                    {token.logoURI ? (
+                      <img src={token.logoURI} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <Web3Icon symbol={token.symbol} className="w-6 h-6" />
                     )}
                   </div>
-                  <div className="text-xs text-[var(--tuwa-text-secondary)] truncate">{token.name}</div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div
-                    className={`font-mono text-sm ${
-                      token.hasBalance
-                        ? 'text-[var(--tuwa-text-primary)] font-semibold'
-                        : 'text-[var(--tuwa-text-tertiary)]'
-                    }`}
-                  >
-                    {parseFloat(token.balance) > 0 ? parseFloat(token.balance).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '0'}
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-[var(--tuwa-text-primary)] truncate">{token.symbol}</span>
+                      {token.hasBalance && (
+                        <span className="text-[10px] bg-green-500/10 text-green-500 px-1.5 py-0.5 rounded-full font-medium border border-green-500/20">
+                          Balance
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--tuwa-text-secondary)] truncate">{token.name}</div>
                   </div>
-                  <div
-                    className={`text-xs ${
-                      token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]'
-                    }`}
-                  >
-                    {token.usdValue}
+                  <div className="text-right shrink-0">
+                    <div
+                      className={`font-mono text-sm ${
+                        token.hasBalance
+                          ? 'text-[var(--tuwa-text-primary)] font-semibold'
+                          : 'text-[var(--tuwa-text-tertiary)]'
+                      }`}
+                    >
+                      {parseFloat(token.balance) > 0
+                        ? parseFloat(token.balance).toLocaleString(undefined, { maximumFractionDigits: 6 })
+                        : '0'}
+                    </div>
+                    <div
+                      className={`text-xs ${
+                        token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]'
+                      }`}
+                    >
+                      {token.usdValue}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
             </div>
           )}
         </div>

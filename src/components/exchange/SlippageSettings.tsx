@@ -18,7 +18,7 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-    
+
     // Allow empty string for clearing input
     if (value === '') {
       setCustomSlippage('');
@@ -59,13 +59,13 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
         <div className="p-3 bg-[var(--tuwa-bg-secondary)] rounded-lg border border-[var(--tuwa-border-primary)] animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
-               <div className="flex gap-2">
+              <div className="flex gap-2">
                 {predefinedValues.map((val) => (
                   <button
                     key={val}
                     onClick={() => {
-                        setCustomSlippage(val);
-                        onSlippageChange({ target: { value: val } } as React.ChangeEvent<HTMLInputElement>);
+                      setCustomSlippage(val);
+                      onSlippageChange({ target: { value: val } } as React.ChangeEvent<HTMLInputElement>);
                     }}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
                       slippage === val
@@ -77,7 +77,7 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
                   </button>
                 ))}
               </div>
-               <div className="relative flex items-center w-24">
+              <div className="relative flex items-center w-24">
                 <input
                   type="number"
                   value={customSlippage}
@@ -94,27 +94,25 @@ export function SlippageSettings({ slippage, onSlippageChange }: SlippageSetting
             </div>
 
             <div className="flex items-center gap-3">
-               <span className="text-xs text-[var(--tuwa-text-tertiary)] w-8">0.1%</span>
-               <input
+              <span className="text-xs text-[var(--tuwa-text-tertiary)] w-8">0.1%</span>
+              <input
                 type="range"
                 min="0.1"
                 max="5" // Slider goes to 5 generally, input allows to 10
                 step="0.1"
-                value={Math.min(parseFloat(slippage) || 0, 5)} 
+                value={Math.min(parseFloat(slippage) || 0, 5)}
                 onChange={handleInputChange}
                 className="flex-1 h-1.5 bg-[var(--tuwa-bg-tertiary)] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--tuwa-button-gradient-from)]"
               />
               <span className="text-xs text-[var(--tuwa-text-tertiary)] w-8">5.0%</span>
             </div>
-             {parseFloat(slippage) > 5 && (
-                <div className="text-xs text-orange-400 font-medium">
-                    High slippage! Your transaction may be frontrun.
-                </div>
+            {parseFloat(slippage) > 5 && (
+              <div className="text-xs text-orange-400 font-medium">
+                High slippage! Your transaction may be frontrun.
+              </div>
             )}
-             {parseFloat(slippage) < 0.5 && (
-                 <div className="text-xs text-orange-400 font-medium">
-                    Low slippage! Your transaction may fail.
-                 </div>
+            {parseFloat(slippage) < 0.5 && (
+              <div className="text-xs text-orange-400 font-medium">Low slippage! Your transaction may fail.</div>
             )}
           </div>
         </div>
