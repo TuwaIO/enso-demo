@@ -3,7 +3,7 @@ import { BalanceItem, SortedBalanceItem } from '../types/enso';
 /**
  * Calculate a quality score for a token based on various attributes
  * Higher scores indicate more likely legitimate tokens
- * 
+ *
  * @param token Token with balance and value information
  * @returns Quality score (0-100)
  */
@@ -33,7 +33,7 @@ export function calculateTokenQuality(token: BalanceItem & { formattedBalance: n
 
 /**
  * Sort tokens by quality score, USD value, then alphabetically
- * 
+ *
  * @param balances Array of token balances to sort
  * @returns Sorted array of token balances
  */

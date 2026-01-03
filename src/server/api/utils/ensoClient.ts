@@ -4,6 +4,8 @@ import { EnsoClient } from '@ensofinance/sdk';
 import { TRPCError } from '@trpc/server';
 import { Address } from 'viem';
 
+import { sortTokensByPriority } from '@/server/api/utils/priorityTokens';
+
 import { BalanceItem, TokenItem } from '../types/enso';
 
 // Initialize Enso client with API key from environment
@@ -39,7 +41,7 @@ export async function getWalletBalances(address: string, chainId: number): Promi
  * Get list of tokens from Enso API
  *
  * @param chainId Chain ID
- * @returns Array of token items
+ * @returns Array of token items sorted by priority
  */
 export async function getTokens(chainId: number): Promise<TokenItem[]> {
   try {
@@ -82,7 +84,7 @@ export async function getTokens(chainId: number): Promise<TokenItem[]> {
       return hasLogo && !hasV1InName;
     });
 
-    return filteredTokens as TokenItem[];
+    return sortTokensByPriority(filteredTokens as TokenItem[]);
   } catch (error) {
     console.error('Error fetching tokens from Enso API:', error);
     throw new TRPCError({

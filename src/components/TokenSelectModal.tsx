@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { Chain } from 'viem/chains';
 
 import { DisplayToken, SortedBalanceItem } from '@/server/api/types/enso';
+import { getTokenPriority } from '@/server/api/utils/priorityTokens';
 import { api } from '@/utils/trpc';
 
 import { NetworkSelector } from './NetworkSelector';
@@ -53,8 +54,11 @@ export function TokenSelectModal({
       walletTokensMap.set(token.token.toLowerCase(), token);
     });
 
-    // Start with wallet tokens (always include them)
-    const walletTokensAsDisplay: DisplayToken[] = tokens.map((walletToken) => ({
+    // Filter wallet tokens by chainId - only include tokens from the selected chain
+    const filteredWalletTokens = tokens.filter((walletToken) => walletToken.chainId === chainId);
+
+    // Start with wallet tokens that match the selected chainId
+    const walletTokensAsDisplay: DisplayToken[] = filteredWalletTokens.map((walletToken) => ({
       address: walletToken.token,
       chainId: walletToken.chainId,
       decimals: walletToken.decimals,
@@ -66,7 +70,7 @@ export function TokenSelectModal({
       hasBalance: true,
     }));
 
-    // Add API tokens that are NOT already in wallet
+    // Add API tokens that are NOT already in wallet (check against ALL wallet tokens, not just filtered)
     const apiTokensAsDisplay: DisplayToken[] = (apiTokens || [])
       .filter((apiToken) => !walletTokensMap.has(apiToken.address.toLowerCase()))
       .map((apiToken) => ({
@@ -84,14 +88,29 @@ export function TokenSelectModal({
     // Combine all tokens
     const allTokens = [...walletTokensAsDisplay, ...apiTokensAsDisplay];
 
-    // Sort tokens: wallet tokens with balance first, then by symbol
+    console.log(
+      `🚀 Final token counts: wallet=${walletTokensAsDisplay.length}, api=${apiTokensAsDisplay.length}, total=${allTokens.length}`,
+    );
+
+    // Enhanced sorting: balance first, then priority, then alphabetical
     return allTokens.sort((a, b) => {
+      // First: tokens with balance come first
       if (a.hasBalance !== b.hasBalance) {
-        return b.hasBalance ? 1 : -1; // Tokens with balance first
+        return b.hasBalance ? 1 : -1;
       }
-      return a.symbol.localeCompare(b.symbol); // Then alphabetically
+
+      // Second: if both have balance OR both don't have balance, sort by priority
+      const priorityA = getTokenPriority(a.symbol);
+      const priorityB = getTokenPriority(b.symbol);
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB; // Lower priority number = higher priority
+      }
+
+      // Third: if same priority, sort alphabetically
+      return a.symbol.localeCompare(b.symbol);
     });
-  }, [apiTokens, tokens]);
+  }, [apiTokens, tokens, chainId]);
 
   // Filter tokens based on search term and balance filter
   const filteredTokens = useMemo(() => {
@@ -188,17 +207,17 @@ export function TokenSelectModal({
                     onSelectToken(convertToSortedBalanceItem(token));
                     onClose();
                   }}
-                  disabled={disabledTokenAddresses.some(addr => addr.toLowerCase() === token.address.toLowerCase())}
+                  disabled={disabledTokenAddresses.some((addr) => addr.toLowerCase() === token.address.toLowerCase())}
                   className={cn(
                     'w-full flex items-center gap-3 p-3 rounded-lg transition-colors group',
                     token.address.toLowerCase() === selectedTokenAddress?.toLowerCase() &&
                       'bg-[var(--tuwa-bg-secondary)]',
-                    disabledTokenAddresses.some(addr => addr.toLowerCase() === token.address.toLowerCase())
+                    disabledTokenAddresses.some((addr) => addr.toLowerCase() === token.address.toLowerCase())
                       ? 'opacity-50 cursor-not-allowed bg-[var(--tuwa-bg-muted)]'
-                      : 'hover:bg-[var(--tuwa-bg-secondary)] cursor-pointer'
+                      : 'hover:bg-[var(--tuwa-bg-secondary)] cursor-pointer',
                   )}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-full bg-[var(--tuwa-bg-secondary)] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     {token.logoURI ? (
                       <img src={token.logoURI} alt={token.symbol} className="w-full h-full rounded-full object-cover" />
                     ) : (
