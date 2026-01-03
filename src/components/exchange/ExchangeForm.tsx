@@ -78,21 +78,8 @@ export function ExchangeForm({
         onAmountChange={onFromAmountChange}
         onSelectToken={onSelectFromToken}
         walletAddress={currentWalletAddress}
-        rightLabel={
-          fromToken && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--tuwa-text-secondary)]">
-                Balance: {fromToken.formattedBalance.toFixed(4)}
-              </span>
-              <button
-                onClick={onMaxAmount}
-                className="text-xs text-[var(--tuwa-button-gradient-from)] hover:text-[var(--tuwa-button-gradient-to)] font-medium uppercase tracking-wide cursor-pointer"
-              >
-                Max
-              </button>
-            </div>
-          )
-        }
+        onMaxAmount={onMaxAmount}
+        chains={chains}
       />
 
       {/* Swap Button */}
@@ -105,17 +92,11 @@ export function ExchangeForm({
         amount={toAmount}
         onAmountChange={onToAmountChange}
         onSelectToken={onSelectToToken}
-        rightLabel={
-          toToken && (
-            <span className="text-xs text-[var(--tuwa-text-secondary)]">
-              Balance: {toToken.formattedBalance.toFixed(4)}
-            </span>
-          )
-        }
         walletAddress={recipientAddress || currentWalletAddress}
         onWalletAddressChange={onRecipientChange}
         showNetworkInfo={true}
         chains={chains}
+        onMaxAmount={onMaxAmount}
       />
 
       {/* Exchange Rate & Refresh */}

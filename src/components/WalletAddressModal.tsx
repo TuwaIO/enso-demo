@@ -64,7 +64,7 @@ export function WalletAddressModal({ isOpen, onClose, currentAddress, onAddressC
           <div className="mt-4 flex justify-end">
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white font-medium hover:opacity-90 transition-opacity"
+              className="cursor-pointer px-4 py-2 rounded-lg bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white font-medium hover:opacity-90 transition-opacity"
             >
               Apply
             </button>
