@@ -24,6 +24,7 @@ export const ensoRouter = createTRPCRouter({
         slippage: z.number().min(0.1).max(50).default(0.5), // Percentage, e.g. 0.5%
         fromAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'), // Required for SDK route calculation
         receiver: z.string().optional(),
+        destinationChainId: z.number().int().positive().optional(), // Optional destination chain ID for cross-chain swaps
       }),
     )
     .query(async ({ input }) => {

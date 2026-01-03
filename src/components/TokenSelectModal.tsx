@@ -1,7 +1,7 @@
 'use client';
 
 import { Web3Icon } from '@bgd-labs/react-web3-icons';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { CloseIcon, cn, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@tuwaio/nova-core';
 import { useMemo, useState } from 'react';
 import { Chain } from 'viem/chains';
 
@@ -21,6 +21,7 @@ interface TokenSelectModalProps {
   enableChainSelection?: boolean;
   chains?: readonly Chain[];
   onSelectChain?: (chainId: number) => void;
+  disabledTokenAddresses?: string[];
 }
 
 export function TokenSelectModal({
@@ -34,6 +35,7 @@ export function TokenSelectModal({
   enableChainSelection = false,
   chains = [],
   onSelectChain,
+  disabledTokenAddresses = [],
 }: TokenSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -45,31 +47,42 @@ export function TokenSelectModal({
 
   // Memoized display tokens to avoid re-computation
   const displayTokens = useMemo<DisplayToken[]>(() => {
-    if (!apiTokens) return [];
-
     // Create a map of wallet tokens by address for quick lookup
     const walletTokensMap = new Map<string, SortedBalanceItem>();
     tokens.forEach((token) => {
       walletTokensMap.set(token.token.toLowerCase(), token);
     });
 
-    // Convert API tokens to display format, merging with wallet tokens if they exist
-    const allTokens: DisplayToken[] = apiTokens.map((apiToken) => {
-      const walletToken = walletTokensMap.get(apiToken.address.toLowerCase());
-      const hasBalance = !!walletToken && walletToken.formattedBalance > 0;
+    // Start with wallet tokens (always include them)
+    const walletTokensAsDisplay: DisplayToken[] = tokens.map((walletToken) => ({
+      address: walletToken.token,
+      chainId: walletToken.chainId,
+      decimals: walletToken.decimals,
+      symbol: walletToken.symbol,
+      name: walletToken.name,
+      logoURI: walletToken.logoUri || '',
+      balance: walletToken.formattedBalance.toFixed(4),
+      usdValue: walletToken.price > 0 ? walletToken.formattedUsdValue : 'Price N/A',
+      hasBalance: true,
+    }));
 
-      return {
+    // Add API tokens that are NOT already in wallet
+    const apiTokensAsDisplay: DisplayToken[] = (apiTokens || [])
+      .filter((apiToken) => !walletTokensMap.has(apiToken.address.toLowerCase()))
+      .map((apiToken) => ({
         address: apiToken.address,
         chainId: apiToken.chainId,
         decimals: apiToken.decimals,
         symbol: apiToken.symbol,
         name: apiToken.name,
         logoURI: apiToken.logosUri?.length ? apiToken.logosUri[0] : '',
-        balance: hasBalance ? walletToken.formattedBalance.toFixed(4) : '0.0000',
-        usdValue: hasBalance ? (walletToken.price > 0 ? walletToken.formattedUsdValue : 'Price N/A') : '$0.00',
-        hasBalance,
-      };
-    });
+        balance: '0.0000',
+        usdValue: '$0.00',
+        hasBalance: false,
+      }));
+
+    // Combine all tokens
+    const allTokens = [...walletTokensAsDisplay, ...apiTokensAsDisplay];
 
     // Sort tokens: wallet tokens with balance first, then by symbol
     return allTokens.sort((a, b) => {
@@ -126,21 +139,18 @@ export function TokenSelectModal({
     };
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-[var(--tuwa-bg-primary)] rounded-xl shadow-2xl border border-[var(--tuwa-border-primary)] overflow-hidden flex flex-col max-h-[80vh]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-full max-w-md bg-[var(--tuwa-bg-primary)] rounded-xl p-0">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--tuwa-border-primary)] shrink-0">
-          <h2 className="text-lg font-bold text-[var(--tuwa-text-primary)]">Select Token</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--tuwa-bg-secondary)] cursor-pointer text-[var(--tuwa-text-secondary)] hover:text-[var(--tuwa-text-primary)] transition-colors"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div>
+        <DialogHeader className="flex items-center justify-between p-4 border-b border-[var(--tuwa-border-primary)] shrink-0">
+          <DialogTitle className="text-lg font-bold text-[var(--tuwa-text-primary)]">Select Token</DialogTitle>
+          <DialogClose asChild>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--tuwa-bg-secondary)] cursor-pointer text-[var(--tuwa-text-secondary)] hover:text-[var(--tuwa-text-primary)] transition-colors">
+              <CloseIcon className="w-5 h-5" />
+            </button>
+          </DialogClose>
+        </DialogHeader>
 
         {/* Chain Selection (Optional) */}
         {enableChainSelection && chains.length > 0 && onSelectChain && (
@@ -162,7 +172,7 @@ export function TokenSelectModal({
         </div>
 
         {/* Token List */}
-        <div className="flex-1 overflow-y-auto p-2 min-h-0">
+        <div className="overflow-y-auto max-h-[400px] NovaCustomScroll">
           {isLoadingTokens ? (
             <div className="text-center py-8 text-[var(--tuwa-text-secondary)] animate-pulse">Loading tokens...</div>
           ) : filteredTokens.length === 0 ? (
@@ -178,11 +188,15 @@ export function TokenSelectModal({
                     onSelectToken(convertToSortedBalanceItem(token));
                     onClose();
                   }}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tuwa-bg-secondary)] transition-colors cursor-pointer group ${
-                    token.address.toLowerCase() === selectedTokenAddress?.toLowerCase()
-                      ? 'bg-[var(--tuwa-bg-secondary)]'
-                      : ''
-                  }`}
+                  disabled={disabledTokenAddresses.some(addr => addr.toLowerCase() === token.address.toLowerCase())}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-3 rounded-lg transition-colors group',
+                    token.address.toLowerCase() === selectedTokenAddress?.toLowerCase() &&
+                      'bg-[var(--tuwa-bg-secondary)]',
+                    disabledTokenAddresses.some(addr => addr.toLowerCase() === token.address.toLowerCase())
+                      ? 'opacity-50 cursor-not-allowed bg-[var(--tuwa-bg-muted)]'
+                      : 'hover:bg-[var(--tuwa-bg-secondary)] cursor-pointer'
+                  )}
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     {token.logoURI ? (
@@ -204,20 +218,22 @@ export function TokenSelectModal({
                   </div>
                   <div className="text-right shrink-0">
                     <div
-                      className={`font-mono text-sm ${
+                      className={cn(
+                        'font-mono text-sm',
                         token.hasBalance
                           ? 'text-[var(--tuwa-text-primary)] font-semibold'
-                          : 'text-[var(--tuwa-text-tertiary)]'
-                      }`}
+                          : 'text-[var(--tuwa-text-tertiary)]',
+                      )}
                     >
                       {parseFloat(token.balance) > 0
                         ? parseFloat(token.balance).toLocaleString(undefined, { maximumFractionDigits: 6 })
                         : '0'}
                     </div>
                     <div
-                      className={`text-xs ${
-                        token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]'
-                      }`}
+                      className={cn(
+                        'text-xs',
+                        token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]',
+                      )}
                     >
                       {token.usdValue}
                     </div>
@@ -227,7 +243,7 @@ export function TokenSelectModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

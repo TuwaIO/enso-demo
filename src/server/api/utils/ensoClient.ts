@@ -51,7 +51,7 @@ export async function getTokens(chainId: number): Promise<TokenItem[]> {
     // Call the Enso API to get tokens
     // Using the endpoint: https://docs.enso.build/api-reference/tokens/tokens
     const response = await fetch(
-      `https://api.enso.build/api/v1/tokens?pageSize=1000&includeUnderlying=true&chainId=${chainId}&includeMetadata=true`,
+      `https://api.enso.build/api/v1/tokens?pageSize=1000&includeUnderlying=true&chainId=${chainId}&includeMetadata=true&type=base`,
       {
         method: 'GET',
         headers: {
@@ -71,9 +71,18 @@ export async function getTokens(chainId: number): Promise<TokenItem[]> {
     const data = await response.json();
 
     // The API returns an array of tokens directly
-    const tokens = Array.isArray(data) ? data : data.data || [];
-    console.log(`✅ Fetched ${tokens.length} tokens from Enso API for chainId ${chainId}`);
-    return tokens as TokenItem[];
+    const rawTokens = Array.isArray(data) ? data : data.data || [];
+
+    // Filter tokens: exclude tokens without logos and tokens with "v1" in name
+    const filteredTokens = rawTokens.filter((token: any) => {
+      // Must have at least one logo
+      const hasLogo = token.logosUri && Array.isArray(token.logosUri) && token.logosUri.length > 0;
+      // Must not contain "v1" in name (case insensitive)
+      const hasV1InName = token.name && token.name.toLowerCase().includes('v1');
+      return hasLogo && !hasV1InName;
+    });
+
+    return filteredTokens as TokenItem[];
   } catch (error) {
     console.error('Error fetching tokens from Enso API:', error);
     throw new TRPCError({
@@ -92,9 +101,10 @@ export async function getOptimalRoute(params: {
   slippage: number;
   fromAddress: string;
   receiver?: string;
+  destinationChainId?: number;
 }) {
   try {
-    const { fromToken, toToken, amount, chainId, slippage, fromAddress, receiver } = params;
+    const { fromToken, toToken, amount, chainId, slippage, fromAddress, receiver, destinationChainId } = params;
 
     // Convert slippage to basis points (1% = 100 bps)
     const slippageBps = Math.floor(slippage * 100);
@@ -107,6 +117,7 @@ export async function getOptimalRoute(params: {
       amountIn: [amount],
       tokenIn: [fromToken as Address],
       tokenOut: [toToken as Address],
+      destinationChainId: destinationChainId || chainId,
       fromAddress: fromAddress as Address,
       receiver: (receiver as Address) ?? (fromAddress as Address),
       spender: fromAddress as Address, // User needs to approve the router

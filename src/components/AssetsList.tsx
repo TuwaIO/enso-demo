@@ -1,7 +1,7 @@
 'use client';
 
 import { Web3Icon } from '@bgd-labs/react-web3-icons';
-import { BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { ArrowsRightLeftIcon, BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
@@ -16,14 +16,8 @@ interface AssetsListProps {
 export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
   const router = useRouter();
 
-  const calculateTotalBalance = () => {
-    if (!assets || assets.length === 0) return 0;
-    return assets.reduce((sum, t) => sum + t.usdValue, 0);
-  };
-
-  const totalBalanceUSD = calculateTotalBalance();
-
-  const handleAssetClick = (asset: SortedBalanceItem) => {
+  const handleSwapClick = (asset: SortedBalanceItem, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
     router.push(`/exchange?from=${asset.token}`);
   };
 
@@ -75,14 +69,6 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
 
   return (
     <div className="relative">
-      {/* Total Balance Display */}
-      <div className="flex justify-end mb-3">
-        <div className="bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] px-4 py-2 rounded-lg shadow-md">
-          <p className="text-sm text-white font-medium">Total Balance</p>
-          <p className="text-xl text-white font-bold">${totalBalanceUSD.toFixed(2)}</p>
-        </div>
-      </div>
-
       {/* Assets List */}
       <div className="NovaCustomScroll space-y-2 max-h-[450px] overflow-y-auto overflow-x-hidden">
         {assets.map((asset, index: number) => (
@@ -91,25 +77,41 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="flex items-center gap-4 p-4 rounded-lg bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-muted)] transition-colors cursor-pointer"
-            onClick={() => handleAssetClick(asset)}
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white font-bold">
-              <Web3Icon symbol={asset.symbol} className="w-full h-full" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-[var(--tuwa-text-primary)] truncate">
-                {asset.name || 'Unknown Token'}
-              </h3>
-              <p className="text-sm text-[var(--tuwa-text-secondary)]">{asset.symbol || 'N/A'}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-mono font-semibold text-[var(--tuwa-text-primary)]">
-                {asset.formattedBalance ? asset.formattedBalance : '0.0000'}
-              </p>
-              <p className="text-xs text-[var(--tuwa-text-tertiary)]">
-                {asset.formattedUsdValue ? `${asset.formattedUsdValue}` : ''}
-              </p>
+            <div className="group flex items-center gap-4 p-4 rounded-lg bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-muted)] transition-all duration-200 border border-transparent hover:border-[var(--tuwa-border-primary)] relative">
+              {/* Token Icon */}
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white font-bold shadow-sm">
+                <Web3Icon symbol={asset.symbol} className="w-full h-full" />
+              </div>
+
+              {/* Token Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-[var(--tuwa-text-primary)] truncate">
+                  {asset.name || 'Unknown Token'}
+                </h3>
+                <p className="text-sm text-[var(--tuwa-text-secondary)]">{asset.symbol || 'N/A'}</p>
+              </div>
+
+              {/* Balance Info - сдвигается влево при hover */}
+              <div className="text-right min-w-0 flex-shrink-0 group-hover:transform group-hover:-translate-x-10 transition-transform duration-200">
+                <p className="font-mono font-semibold text-[var(--tuwa-text-primary)] text-sm">
+                  {asset.formattedBalance ? asset.formattedBalance.toFixed(4) : '0.0000'}
+                </p>
+                <p className="text-xs text-[var(--tuwa-text-tertiary)]">
+                  {asset.formattedUsdValue ? `${asset.formattedUsdValue}` : ''}
+                </p>
+              </div>
+
+              {/* Action Button - появляется при hover */}
+              <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button
+                  onClick={(e) => handleSwapClick(asset, e)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)]/10 to-[var(--tuwa-button-gradient-to)]/10 hover:from-[var(--tuwa-button-gradient-from)]/20 hover:to-[var(--tuwa-button-gradient-to)]/20 border border-[var(--tuwa-button-gradient-from)]/20 hover:border-[var(--tuwa-button-gradient-from)]/30 text-[var(--tuwa-button-gradient-from)] transition-all duration-150 active:scale-90 cursor-pointer"
+                  title="Swap"
+                >
+                  <ArrowsRightLeftIcon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}

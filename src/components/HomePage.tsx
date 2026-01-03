@@ -101,7 +101,7 @@ export default function HomePage() {
         /* Show connected wallet assets */
         <WalletAssetsCard
           {...commonWalletAssetsCardProps}
-          title="Your Assets"
+          title="Assets list"
           subtitle="Connected wallet assets"
           isWalletConnected={true}
         >

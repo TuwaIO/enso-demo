@@ -1,8 +1,9 @@
 'use client';
 
 import { BanknotesIcon, CheckIcon, ClipboardIcon, WalletIcon } from '@heroicons/react/24/outline';
+import { useCopyToClipboard } from '@tuwaio/nova-core';
 import { motion } from 'framer-motion';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Chain } from 'viem/chains';
 
 import { AssetsList } from './AssetsList';
@@ -40,6 +41,7 @@ interface CardHeaderProps {
   address?: string;
   onCopyAddress?: () => void;
   isCopied?: boolean;
+  assets: any[] | undefined;
 }
 
 // Reusable network selector section component
@@ -79,15 +81,33 @@ function SearchInputSection({ onSearch, initialValue = '', placeholder, onReset 
   );
 }
 
-function CardHeader({ title, subtitle, icon, address, onCopyAddress, isCopied = false }: CardHeaderProps) {
+function CardHeader({ title, subtitle, icon, address, onCopyAddress, isCopied = false, assets }: CardHeaderProps) {
+  const calculateTotalBalance = () => {
+    if (!assets || assets.length === 0) return 0;
+    return assets.reduce((sum, t) => sum + t.usdValue, 0);
+  };
+
+  const totalBalanceUSD = calculateTotalBalance();
+
   return (
     <div className="bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] p-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 p-2 rounded-full bg-white/20">{icon}</div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          <p className="text-blue-100 text-sm">{subtitle}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 p-2 rounded-full bg-white/20">{icon}</div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-white">{title}</h1>
+            <p className="text-blue-100 text-sm">{subtitle}</p>
+          </div>
         </div>
+
+        {!!assets?.length && (
+          <div className="flex justify-end mb-3">
+            <div className="bg-[var(--tuwa-bg-secondary)] px-4 py-2 rounded-lg shadow-md">
+              <p className="text-sm font-medium">Total Balance</p>
+              <p className="text-xl font-bold">${totalBalanceUSD.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Wallet Address with Copy Button */}
@@ -137,7 +157,7 @@ interface WalletAssetsCardProps {
 
 export function WalletAssetsCard({
   title,
-  subtitle = 'Powered by Enso Finance',
+  subtitle = 'Powered by TUWA using Enso API',
   address,
   isLoading,
   assets,
@@ -149,28 +169,15 @@ export function WalletAssetsCard({
   onSelectChain = () => {},
   isWalletConnected = true,
 }: WalletAssetsCardProps) {
-  // State to track if address has been copied
-  const [isCopied, setIsCopied] = useState(false);
+  // Use the copy to clipboard hook
+  const { isCopied, copy } = useCopyToClipboard();
 
   // Function to copy address to clipboard
   const copyAddressToClipboard = () => {
     if (address) {
-      navigator.clipboard
-        .writeText(address)
-        .then(() => {
-          // Update state to show copied status
-          setIsCopied(true);
-
-          // Reset copied state after 2 seconds
-          setTimeout(() => {
-            setIsCopied(false);
-          }, 2000);
-
-          console.log('Address copied to clipboard');
-        })
-        .catch((err) => {
-          console.error('Failed to copy address: ', err);
-        });
+      copy(address).catch((err) => {
+        console.error('Failed to copy address: ', err);
+      });
     }
   };
 
@@ -184,6 +191,7 @@ export function WalletAssetsCard({
         address={address}
         onCopyAddress={copyAddressToClipboard}
         isCopied={isCopied}
+        assets={assets}
       />
 
       {/* Search Input (if provided) */}
@@ -226,6 +234,7 @@ export function WalletRequiredCard({
         title="Wallet Explorer"
         subtitle="Search any wallet or connect yours"
         icon={<WalletIcon className="w-full h-full text-white" />}
+        assets={[]}
       />
 
       {/* Search Input */}

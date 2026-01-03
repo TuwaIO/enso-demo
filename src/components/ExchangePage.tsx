@@ -28,6 +28,10 @@ export default function ExchangePage() {
   const [slippage, setSlippage] = useState('0.5');
   const [recipientAddress, setRecipientAddress] = useState('');
 
+  // State for UI feedback
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   // Cross-chain state
   // Destination chain defaults to connected chain, but can be changed
   const [destinationChainId, setDestinationChainId] = useState<number>(1);
@@ -116,6 +120,7 @@ export default function ExchangePage() {
       slippage: parseFloat(slippage),
       fromAddress: walletAddress,
       receiver: recipientAddress || undefined,
+      destinationChainId, // Destination chain for cross-chain swaps
     },
     {
       enabled: !!fromToken && !!toToken && !!fromAmount && parseFloat(fromAmount) > 0 && !!walletAddress,
@@ -200,8 +205,12 @@ export default function ExchangePage() {
 
   // Handle exchange
   const handleExchange = () => {
+    // Clear previous messages
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
     if (!fromToken || !toToken || !fromAmount || !toAmount || !optimalRoute) {
-      alert('Please select tokens and enter amounts');
+      setErrorMessage('Please select tokens and enter amounts');
       return;
     }
 
@@ -217,7 +226,12 @@ export default function ExchangePage() {
     console.log('TX Data for Pulsar:', optimalRoute.tx);
     console.log('-----------------------------------');
 
-    alert('Check console for transaction data!');
+    setSuccessMessage('Transaction prepared! Check console for details.');
+
+    // Auto-clear success message after 5 seconds
+    setTimeout(() => {
+      setSuccessMessage(null);
+    }, 5000);
   };
 
   return (
@@ -239,6 +253,7 @@ export default function ExchangePage() {
           selectedTokenAddress={fromToken?.token}
           filterByBalance={true}
           enableChainSelection={false}
+          disabledTokenAddresses={toToken ? [toToken.token] : []}
         />
 
         {/* Destination Token Selector: All tokens, Chain Selection enabled */}
@@ -258,6 +273,7 @@ export default function ExchangePage() {
           enableChainSelection={true}
           chains={appEVMChains}
           onSelectChain={(newChainId) => setDestinationChainId(newChainId)}
+          disabledTokenAddresses={fromToken ? [fromToken.token] : []}
         />
       </>
 
@@ -284,9 +300,13 @@ export default function ExchangePage() {
             onSwapTokens={handleSwapTokens}
             onMaxAmount={handleMaxAmount}
             onExchange={handleExchange}
+            currentWalletAddress={activeConnection?.address}
             recipientAddress={recipientAddress}
             onRecipientChange={setRecipientAddress}
             onRefresh={() => refetchOptimalRoute()}
+            chains={appEVMChains}
+            errorMessage={errorMessage}
+            successMessage={successMessage}
           />
         </div>
       </div>

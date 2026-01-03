@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowPathIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 interface WalletSearchProps {
@@ -39,7 +39,7 @@ export function WalletSearch({
 
   return (
     <form onSubmit={handleSubmit} className="w-full relative">
-      {/* Reset button at top right */}
+      {/* Reset button at top right - now with X icon and active state */}
       {onReset && (
         <button
           type="button"
@@ -47,10 +47,10 @@ export function WalletSearch({
             setAddress(''); // Clear the input field
             onReset(); // Call the parent's reset handler
           }}
-          className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-          title="Reset search and network"
+          className="absolute -top-2 -right-2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white shadow-md hover:shadow-lg active:scale-90 transition-all duration-150 cursor-pointer"
+          title="Clear wallet and reset"
         >
-          <ArrowPathIcon className="w-4 h-4" />
+          <XMarkIcon className="w-4 h-4" />
         </button>
       )}
 
@@ -75,11 +75,11 @@ export function WalletSearch({
         </p>
       )}
 
-      {/* Search button at bottom center */}
+      {/* Search button at bottom center - now with active state */}
       <div className="flex justify-center mt-4">
         <button
           type="submit"
-          className="px-6 py-2 rounded-full bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white font-medium shadow-md hover:shadow-lg transition-shadow cursor-pointer flex items-center gap-2"
+          className="px-6 py-2 rounded-full bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] text-white font-medium shadow-md hover:shadow-lg active:scale-95 transition-all duration-150 cursor-pointer flex items-center gap-2"
         >
           <MagnifyingGlassIcon className="w-4 h-4" />
           Search
