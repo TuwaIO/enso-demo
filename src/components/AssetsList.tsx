@@ -48,7 +48,7 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
         </div>
         <h3 className="text-lg font-medium text-[var(--tuwa-text-primary)] mb-2">Error Loading Assets</h3>
         <p className="text-[var(--tuwa-text-secondary)] mb-2">{error}</p>
-        <p className="text-sm text-[var(--tuwa-text-tertiary)]">
+        <p className="text-sm text-[var(--tuwa-text-secondary)]">
           Please try again or check the wallet address and network.
         </p>
       </div>
@@ -60,7 +60,7 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--tuwa-bg-secondary)] flex items-center justify-center">
-          <BanknotesIcon className="w-8 h-8 text-[var(--tuwa-text-tertiary)]" />
+          <BanknotesIcon className="w-8 h-8 text-[var(--tuwa-text-secondary)]" />
         </div>
         <p className="text-[var(--tuwa-text-secondary)]">No assets found in this wallet</p>
       </div>
@@ -97,7 +97,7 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
                 <p className="font-mono font-semibold text-[var(--tuwa-text-primary)] text-sm">
                   {asset.formattedBalance ? asset.formattedBalance.toFixed(4) : '0.0000'}
                 </p>
-                <p className="text-xs text-[var(--tuwa-text-tertiary)]">
+                <p className="text-xs text-[var(--tuwa-text-secondary)]">
                   {asset.formattedUsdValue ? `${asset.formattedUsdValue}` : ''}
                 </p>
               </div>

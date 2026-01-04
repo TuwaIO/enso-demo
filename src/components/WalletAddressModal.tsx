@@ -56,7 +56,7 @@ export function WalletAddressModal({ isOpen, onClose, currentAddress, onAddressC
             placeholder="0x..."
             className={`w-full p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border ${
               errorMessage ? 'border-red-500 dark:border-red-700' : 'border-[var(--tuwa-border-primary)]'
-            } text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)] font-mono`}
+            } text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)] font-mono`}
           />
 
           {/* Error Message */}

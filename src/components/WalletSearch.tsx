@@ -62,10 +62,10 @@ export function WalletSearch({
           placeholder={placeholder}
           className={`w-full p-3 pl-10 rounded-lg bg-[var(--tuwa-bg-secondary)] border ${
             isValid ? 'border-[var(--tuwa-border-primary)]' : 'border-red-500'
-          } text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)]`}
+          } text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)]`}
         />
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <MagnifyingGlassIcon className="w-5 h-5 text-[var(--tuwa-text-tertiary)]" />
+          <MagnifyingGlassIcon className="w-5 h-5 text-[var(--tuwa-text-secondary)]" />
         </div>
       </div>
 

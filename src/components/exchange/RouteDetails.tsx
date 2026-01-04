@@ -43,7 +43,7 @@ export function RouteDetails({ route }: RouteDetailsProps) {
 
                 {/* Arrow Connector (if not last item) */}
                 {index < route.length - 1 && (
-                  <div className="mx-2 text-[var(--tuwa-text-tertiary)] bg-[var(--tuwa-bg-muted)] rounded-full p-1">
+                  <div className="mx-2 text-[var(--tuwa-text-secondary)] bg-[var(--tuwa-bg-muted)] rounded-full p-1">
                     <ChevronRightIcon className="h-4 w-4" />
                   </div>
                 )}

@@ -251,7 +251,7 @@ export function WalletRequiredCard({
       {/* Content */}
       <div className="p-6 text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--tuwa-bg-secondary)] flex items-center justify-center">
-          <WalletIcon className="w-8 h-8 text-[var(--tuwa-text-tertiary)]" />
+          <WalletIcon className="w-8 h-8 text-[var(--tuwa-text-secondary)]" />
         </div>
         <h2 className="text-xl font-bold text-[var(--tuwa-text-primary)] mb-2">No Wallet Connected</h2>
         <p className="text-[var(--tuwa-text-secondary)] mb-4">

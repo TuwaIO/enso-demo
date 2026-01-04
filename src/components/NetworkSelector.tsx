@@ -34,7 +34,7 @@ export function NetworkSelector({ chains, selectedChainId, onSelectChain }: Netw
             </div>
             <div className="flex flex-col items-start">
               <span className="font-semibold text-[var(--tuwa-text-primary)]">{selectedChain.name}</span>
-              <span className="text-xs text-[var(--tuwa-text-tertiary)] font-mono">Chain ID: {selectedChain.id}</span>
+              <span className="text-xs text-[var(--tuwa-text-secondary)] font-mono">Chain ID: {selectedChain.id}</span>
             </div>
           </div>
         </Select.Value>
@@ -71,7 +71,7 @@ export function NetworkSelector({ chains, selectedChainId, onSelectChain }: Netw
                     <Select.ItemText className="font-semibold text-[var(--tuwa-text-primary)] group-data-[state=checked]:text-[var(--tuwa-button-gradient-from)] truncate">
                       {chain.name}
                     </Select.ItemText>
-                    <span className="text-xs text-[var(--tuwa-text-tertiary)] font-mono group-data-[state=checked]:text-[var(--tuwa-text-secondary)]">
+                    <span className="text-xs text-[var(--tuwa-text-secondary)] font-mono group-data-[state=checked]:text-[var(--tuwa-text-secondary)]">
                       Chain ID: {chain.id}
                     </span>
                   </div>

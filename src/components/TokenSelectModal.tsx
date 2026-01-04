@@ -186,7 +186,7 @@ export function TokenSelectModal({
             placeholder="Search by name or address"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)]"
+            className="w-full p-3 rounded-lg bg-[var(--tuwa-bg-secondary)] border border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--tuwa-button-gradient-from)]"
           />
         </div>
 
@@ -241,7 +241,7 @@ export function TokenSelectModal({
                         'font-mono text-sm',
                         token.hasBalance
                           ? 'text-[var(--tuwa-text-primary)] font-semibold'
-                          : 'text-[var(--tuwa-text-tertiary)]',
+                          : 'text-[var(--tuwa-text-secondary)]',
                       )}
                     >
                       {parseFloat(token.balance) > 0
@@ -251,7 +251,7 @@ export function TokenSelectModal({
                     <div
                       className={cn(
                         'text-xs',
-                        token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-tertiary)]',
+                        token.hasBalance ? 'text-[var(--tuwa-text-secondary)]' : 'text-[var(--tuwa-text-secondary)]',
                       )}
                     >
                       {token.usdValue}
