@@ -3,7 +3,7 @@ import 'server-only';
 import { EnsoClient } from '@ensofinance/sdk';
 import { TRPCError } from '@trpc/server';
 import { createViemClient } from '@tuwaio/orbit-evm';
-import { Address, formatUnits } from 'viem';
+import { Address, erc20Abi, formatUnits } from 'viem';
 
 import { appEVMChains } from '@/configs/appConfig';
 import { sortTokensByPriority } from '@/server/api/utils/priorityTokens';
@@ -18,9 +18,10 @@ export const ensoClient = new EnsoClient({
 /**
  * Get token balances for a wallet address
  *
- * @param address Wallet address
- * @param chainId Chain ID
- * @returns Array of token balances
+ * @param address - Wallet address (0x format)
+ * @param chainId - Chain ID (e.g., 1 for Ethereum mainnet)
+ * @returns Promise<BalanceItem[]> Array of token balances
+ * @throws {TRPCError} When API call fails
  */
 export async function getWalletBalances(address: string, chainId: number): Promise<BalanceItem[]> {
   try {
@@ -42,8 +43,9 @@ export async function getWalletBalances(address: string, chainId: number): Promi
 /**
  * Get list of tokens from Enso API
  *
- * @param chainId Chain ID
- * @returns Array of token items sorted by priority
+ * @param chainId - Chain ID to fetch tokens for
+ * @returns Promise<TokenItem[]> Array of token items sorted by priority
+ * @throws {TRPCError} When API call fails or ENSO_API_KEY is missing
  */
 export async function getTokens(chainId: number): Promise<TokenItem[]> {
   try {
@@ -97,6 +99,21 @@ export async function getTokens(chainId: number): Promise<TokenItem[]> {
   }
 }
 
+/**
+ * Get optimal route between two tokens using Enso SDK
+ *
+ * @param params - Route parameters
+ * @param params.fromToken - Source token address
+ * @param params.toToken - Destination token address
+ * @param params.amount - Amount to swap (in wei/smallest unit)
+ * @param params.chainId - Source chain ID
+ * @param params.slippage - Slippage tolerance (percentage, e.g., 0.5 for 0.5%)
+ * @param params.fromAddress - User wallet address
+ * @param params.receiver - Optional recipient address (defaults to fromAddress)
+ * @param params.destinationChainId - Optional destination chain ID for cross-chain swaps
+ * @returns Promise<RouteResponse> Optimal route data with transaction info
+ * @throws {TRPCError} When no route found or API call fails
+ */
 export async function getOptimalRoute(params: {
   fromToken: string;
   toToken: string;
@@ -201,6 +218,83 @@ export async function getOptimalRoute(params: {
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to fetch optimal route from Enso SDK',
+      cause: error,
+    });
+  }
+}
+
+/**
+ * Check if token approval is required and get approval transaction data
+ *
+ * @param chainId - Chain ID where the token exists
+ * @param fromAddress - User wallet address that owns the tokens
+ * @param tokenAddress - ERC20 token contract address to check approval for
+ * @param amount - Amount to be spent (in wei/smallest unit)
+ * @returns Promise<ApprovalData | undefined> Approval transaction data if approval needed, undefined if sufficient allowance
+ * @throws {TRPCError} When API call fails or viem client operations fail
+ *
+ * @example
+ * ```typescript
+ * const approvalData = await getApprovalData(1, userAddress, tokenAddress, amountInWei);
+ * if (approvalData) {
+ *   // User needs to approve token spending first
+ *   console.log('Approval required:', approvalData);
+ * } else {
+ *   // User has sufficient allowance, can proceed with swap
+ *   console.log('No approval needed');
+ * }
+ * ```
+ */
+export async function getApprovalData(chainId: number, fromAddress: string, tokenAddress: string, amount: string) {
+  try {
+    // 🏗️ Get approval transaction data from Enso SDK
+    const approvalData = await ensoClient.getApprovalData({
+      chainId,
+      fromAddress: fromAddress as Address,
+      tokenAddress: tokenAddress as Address,
+      amount: amount,
+    });
+
+    // 🔧 Create Viem client for blockchain interactions
+    const viemClient = createViemClient(chainId, appEVMChains);
+    if (!viemClient) {
+      throw new Error(`Failed to create Viem client for chain ${chainId}`);
+    }
+
+    // 🔍 Check current token allowance using Viem's readContract
+    const allowance = await viemClient.readContract({
+      address: tokenAddress as Address,
+      abi: erc20Abi,
+      functionName: 'allowance',
+      args: [fromAddress as Address, approvalData.spender as Address],
+    });
+
+    // 🔢 Compare current allowance with required amount
+    const requiredAmount = BigInt(amount);
+    const currentAllowance = allowance as bigint;
+
+    console.log(`🔍 Token approval check:`, {
+      token: tokenAddress,
+      spender: approvalData.spender,
+      required: requiredAmount.toString(),
+      current: currentAllowance.toString(),
+      needsApproval: currentAllowance < requiredAmount,
+    });
+
+    // ✅ Return approval data only if more allowance is needed
+    if (currentAllowance < requiredAmount) {
+      console.log('📝 Approval required - returning approval transaction data');
+      return approvalData;
+    }
+
+    // 🎯 Sufficient allowance - no approval needed
+    console.log('✨ Sufficient allowance - no approval needed');
+    return undefined;
+  } catch (error) {
+    console.error('❌ Error fetching Enso Approval data:', error);
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to fetch approval data from Enso API',
       cause: error,
     });
   }
