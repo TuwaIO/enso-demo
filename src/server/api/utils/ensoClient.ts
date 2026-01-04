@@ -140,8 +140,10 @@ export async function getOptimalRoute(params: {
       fromToken,
       toToken,
       fromAmount: amount,
-      // SDK may return amountOut as string or array, take first value
-      toAmount: Array.isArray(routeResponse.amountOut) ? routeResponse.amountOut[0] : routeResponse.amountOut,
+      // @ts-expect-error - minAmountOut is not defined in the SDK type definitions but is returned by the API
+      minAmountOut: routeResponse.minAmountOut,
+      priceImpact: routeResponse.priceImpact,
+      toAmount: routeResponse.amountOut,
       route: routeResponse.route, // Route for displaying steps
       tx: routeResponse.tx, // Transaction data
       gas: routeResponse.gas, // Gas estimate

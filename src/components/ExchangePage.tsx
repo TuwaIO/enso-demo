@@ -539,8 +539,6 @@ export default function ExchangePage() {
               refetchOptimalRoute();
               toast.info('🔄 Refreshing route data...', {
                 containerId: 'exchange',
-                position: 'top-left',
-                autoClose: 1500,
               });
             }}
             chains={appEVMChains}
