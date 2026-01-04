@@ -110,7 +110,7 @@ export function ExchangeForm({
       />
 
       {/* Exchange Rate & Refresh */}
-      {fromToken && toToken && (
+      {fromToken && toToken && Number(fromAmount) > 0 && Number(toAmount) > 0 && (
         <>
           <div className="relative flex items-center justify-between mt-2 bg-[var(--tuwa-bg-secondary)] p-3 rounded-lg border border-[var(--tuwa-border-primary)] border-dashed">
             <div className="absolute top-[-17px] right-[-15px]">
@@ -128,7 +128,12 @@ export function ExchangeForm({
             />
           </div>
 
-          <ExchangeDetails minAmountOut={minAmountOut} priceImpact={priceImpact} toSymbol={toToken.symbol} />
+          <ExchangeDetails
+            minAmountOut={minAmountOut}
+            priceImpact={priceImpact}
+            fromSymbol={fromToken.symbol}
+            toSymbol={toToken.symbol}
+          />
 
           <RouteDetails route={route} />
         </>

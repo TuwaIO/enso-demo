@@ -3,7 +3,7 @@ import 'server-only';
 import { EnsoClient } from '@ensofinance/sdk';
 import { TRPCError } from '@trpc/server';
 import { createViemClient } from '@tuwaio/orbit-evm';
-import { Address } from 'viem';
+import { Address, formatUnits } from 'viem';
 
 import { appEVMChains } from '@/configs/appConfig';
 import { sortTokensByPriority } from '@/server/api/utils/priorityTokens';
@@ -144,16 +144,52 @@ export async function getOptimalRoute(params: {
       address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
     });
 
+    const tokenOutPrice = await ensoClient.getPriceData({
+      chainId: destinationChainId || chainId,
+      address: toToken as Address,
+    });
+
+    const updatedRoutes = await Promise.all(
+      routeResponse.route.map(async (step) => {
+        const tokensInWithData = await Promise.all(
+          step.tokenIn.map(async (token) => {
+            const tokenData = await ensoClient.getTokenData({
+              chainId: step.chainId ?? step.sourceChainId,
+              address: token as Address,
+              includeMetadata: true,
+            });
+            return tokenData.data[0];
+          }),
+        );
+
+        const tokensOutWithData = await Promise.all(
+          step.tokenOut.map(async (token) => {
+            const tokenData = await ensoClient.getTokenData({
+              chainId: step.destinationChainId ?? step.chainId ?? step.sourceChainId,
+              address: token as Address,
+              includeMetadata: true,
+            });
+            return tokenData.data[0];
+          }),
+        );
+        return {
+          ...step,
+          tokenIn: tokensInWithData,
+          tokenOut: tokensOutWithData,
+        };
+      }),
+    );
+
     // Return data in a format convenient for the frontend
     return {
       fromToken,
       toToken,
       fromAmount: amount,
       // @ts-expect-error - minAmountOut is not defined in the SDK type definitions but is returned by the API
-      minAmountOut: routeResponse.minAmountOut,
+      minAmountOut: formatUnits(BigInt(routeResponse.minAmountOut), tokenOutPrice.decimals),
       priceImpact: routeResponse.priceImpact,
       toAmount: routeResponse.amountOut,
-      route: routeResponse.route, // Route for displaying steps
+      route: updatedRoutes, // Route for displaying steps
       tx: routeResponse.tx, // Transaction data
       gasPrice: gasPrice,
       gas: routeResponse.gas, // Gas estimate

@@ -20,7 +20,7 @@ export function RouteDetails({ route }: RouteDetailsProps) {
     <div className="mt-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center text-sm font-medium text-[var(--tuwa-text-secondary)] hover:text-[var(--tuwa-text-primary)] transition-colors mb-2 focus:outline-none"
+        className="cursor-pointer flex items-center text-sm font-medium text-[var(--tuwa-text-secondary)] hover:text-[var(--tuwa-text-primary)] transition-colors mb-2 focus:outline-none"
       >
         <span>{isOpen ? 'Hide route' : 'Show route'}</span>
         {isOpen ? <ChevronUpIcon className="h-4 w-4 ml-1" /> : <ChevronDownIcon className="h-4 w-4 ml-1" />}
@@ -31,14 +31,11 @@ export function RouteDetails({ route }: RouteDetailsProps) {
           <div className="flex items-center min-w-max">
             {route.map((hop, index) => (
               <div key={index} className="flex items-center">
-                {/* Step Card */}
                 <div className="flex flex-col items-center justify-center bg-[var(--tuwa-bg-primary)] border border-[var(--tuwa-border-secondary)] rounded-lg p-2 min-w-[100px] shadow-sm">
                   <div className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-semibold mb-1">
                     {hop.protocol}
                   </div>
-                  <div className="text-xs text-[var(--tuwa-text-secondary)] font-medium capitalize">
-                    {hop.action}
-                  </div>
+                  <div className="text-xs text-[var(--tuwa-text-secondary)] font-medium capitalize">{hop.action}</div>
                 </div>
 
                 {/* Arrow Connector (if not last item) */}

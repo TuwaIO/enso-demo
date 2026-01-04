@@ -85,22 +85,8 @@ export function ExchangeRate({
       {/* ⛽ Gas Cost */}
       {gasInfo && (
         <div className="flex items-center text-xs text-gray-400 gap-1 flex-shrink-0">
-          <svg
-            className="mr-1"
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="3" x2="15" y1="22" y2="22"></line>
-            <line x1="4" x2="14" y1="9" y2="9"></line>
-            <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path>
-            <path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path>
+          <svg className="w-4 h-4" focusable="false" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="m19.77 7.23.01-.01-3.72-3.72L15 4.56l2.11 2.11c-.94.36-1.61 1.26-1.61 2.33 0 1.38 1.12 2.5 2.5 2.5.36 0 .69-.08 1-.21v7.21c0 .55-.45 1-1 1s-1-.45-1-1V14c0-1.1-.9-2-2-2h-1V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v16h10v-7.5h1.5v5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V9c0-.69-.28-1.32-.73-1.77M18 10c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1M8 18v-4.5H6L10 6v5h2z"></path>
           </svg>
           <span className="truncate">{gasInfo}</span>
         </div>
