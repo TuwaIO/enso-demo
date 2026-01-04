@@ -1,12 +1,15 @@
 'use client';
 
+import { PriceData } from '@ensofinance/sdk';
 import { Chain } from 'viem/chains';
 
 import { Hop, SortedBalanceItem } from '@/server/api/types/enso';
 
 import { ExchangeButton } from './ExchangeButton';
+import { ExchangeDetails } from './ExchangeDetails';
 import { ExchangeRate } from './ExchangeRate';
 import { RefreshTimer } from './RefreshTimer';
+import { RouteDetails } from './RouteDetails';
 import { SlippageSettings } from './SlippageSettings';
 import { SwapButton } from './SwapButton';
 import { TokenInput } from './TokenInput';
@@ -20,6 +23,11 @@ interface ExchangeFormProps {
   isLoadingRoute: boolean;
   walletConnected: boolean;
   route?: Hop[];
+  gas?: number | string;
+  gasPrice?: number | string;
+  nativeCurrency?: PriceData;
+  minAmountOut?: string;
+  priceImpact?: number;
   onFromAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onToAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSlippageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -44,6 +52,11 @@ export function ExchangeForm({
   isLoadingRoute,
   walletConnected,
   route,
+  gas,
+  gasPrice,
+  nativeCurrency,
+  minAmountOut,
+  priceImpact,
   onFromAmountChange,
   onToAmountChange,
   onSlippageChange,
@@ -98,23 +111,31 @@ export function ExchangeForm({
 
       {/* Exchange Rate & Refresh */}
       {fromToken && toToken && (
-        <div className="flex items-center justify-between mt-2 mb-4 bg-[var(--tuwa-bg-secondary)] p-2 rounded-lg border border-[var(--tuwa-border-primary)] border-dashed">
-          <ExchangeRate
-            fromSymbol={fromToken.symbol}
-            toSymbol={toToken.symbol}
-            fromAmount={fromAmount}
-            toAmount={toAmount}
-            isLoading={isLoadingRoute}
-            route={route}
-          />
-          <RefreshTimer onRefresh={onRefresh} isLoading={isLoadingRoute} />
-        </div>
+        <>
+          <div className="relative flex items-center justify-between mt-2 bg-[var(--tuwa-bg-secondary)] p-3 rounded-lg border border-[var(--tuwa-border-primary)] border-dashed">
+            <div className="absolute top-[-17px] right-[-15px]">
+              <RefreshTimer onRefresh={onRefresh} isLoading={isLoadingRoute} />
+            </div>
+            <ExchangeRate
+              fromSymbol={fromToken.symbol}
+              toSymbol={toToken.symbol}
+              fromAmount={fromAmount}
+              toAmount={toAmount}
+              isLoading={isLoadingRoute}
+              gas={gas}
+              gasPrice={gasPrice}
+              nativeCurrency={nativeCurrency}
+            />
+          </div>
+
+          <ExchangeDetails minAmountOut={minAmountOut} priceImpact={priceImpact} toSymbol={toToken.symbol} />
+
+          <RouteDetails route={route} />
+        </>
       )}
 
-      {/* Spacer */}
-      <div className="h-4"></div>
+      <div className="h-8"></div>
 
-      {/* Exchange Button */}
       <ExchangeButton onExchange={onExchange} disabled={isExchangeDisabled} walletConnected={walletConnected} />
     </div>
   );

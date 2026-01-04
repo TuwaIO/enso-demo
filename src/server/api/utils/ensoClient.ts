@@ -2,8 +2,10 @@ import 'server-only';
 
 import { EnsoClient } from '@ensofinance/sdk';
 import { TRPCError } from '@trpc/server';
+import { createViemClient } from '@tuwaio/orbit-evm';
 import { Address } from 'viem';
 
+import { appEVMChains } from '@/configs/appConfig';
 import { sortTokensByPriority } from '@/server/api/utils/priorityTokens';
 
 import { BalanceItem, TokenItem } from '../types/enso';
@@ -135,6 +137,13 @@ export async function getOptimalRoute(params: {
       });
     }
 
+    const viemClient = createViemClient(chainId, appEVMChains);
+    const gasPrice = Number((await viemClient?.getGasPrice()) ?? 0);
+    const nativeCurrency = await ensoClient.getPriceData({
+      chainId,
+      address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    });
+
     // Return data in a format convenient for the frontend
     return {
       fromToken,
@@ -146,8 +155,10 @@ export async function getOptimalRoute(params: {
       toAmount: routeResponse.amountOut,
       route: routeResponse.route, // Route for displaying steps
       tx: routeResponse.tx, // Transaction data
+      gasPrice: gasPrice,
       gas: routeResponse.gas, // Gas estimate
       createdAt: routeResponse.createdAt,
+      nativeCurrency,
     };
   } catch (error) {
     console.error('Error fetching optimal route from Enso SDK:', error);

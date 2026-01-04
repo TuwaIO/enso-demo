@@ -524,6 +524,11 @@ export default function ExchangePage() {
             isLoadingRoute={isLoadingRoute}
             walletConnected={!!walletAddress}
             route={optimalRoute?.route}
+            gas={optimalRoute?.gas}
+            gasPrice={optimalRoute?.gasPrice}
+            nativeCurrency={optimalRoute?.nativeCurrency}
+            minAmountOut={optimalRoute?.minAmountOut}
+            priceImpact={optimalRoute?.priceImpact != null ? Number(optimalRoute.priceImpact) : undefined}
             onFromAmountChange={handleFromAmountChange}
             onToAmountChange={handleToAmountChange}
             onSlippageChange={handleSlippageChange}

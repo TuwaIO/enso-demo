@@ -64,7 +64,7 @@ export default async function RootLayout({
           <ToastContainer
             className="Exchange_toast"
             containerId="exchange"
-            position="top-right"
+            position="top-center"
             autoClose={4000}
             hideProgressBar={false}
             newestOnTop={false}
