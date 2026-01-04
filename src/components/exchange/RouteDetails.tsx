@@ -1,7 +1,7 @@
 import { Web3Icon } from '@bgd-labs/react-web3-icons';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/20/solid';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { useState } from 'react';
 
 import { Hop } from '@/server/api/types/enso';
@@ -30,9 +30,9 @@ export function RouteDetails({ route }: RouteDetailsProps) {
           {/* Main Token Icon */}
           <div className="w-full h-full rounded-full overflow-hidden bg-[var(--tuwa-bg-muted)] border border-[var(--tuwa-border-secondary)] shadow-sm">
             {token.logosUri?.[0] ? (
-              <img src={token.logosUri[0]} alt={token.symbol} className="w-full h-full object-cover" />
+              <img src={token.logosUri[0]} alt={token.symbol ?? ''} className="w-full h-full object-cover" />
             ) : (
-              <Web3Icon symbol={token.symbol} className="w-full h-full" />
+              <Web3Icon symbol={token.symbol ?? ''} className="w-full h-full" />
             )}
           </div>
           {/* Chain Badge */}
@@ -45,7 +45,7 @@ export function RouteDetails({ route }: RouteDetailsProps) {
   };
 
   // 🏹 Arrow flow animation variants
-  const arrowFlowVariants = {
+  const arrowFlowVariants: Variants = {
     initial: { x: 0, opacity: 1 },
     animate: {
       x: [0, 4, -4, 0],

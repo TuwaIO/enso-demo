@@ -1,3 +1,4 @@
+import { TokenData } from '@ensofinance/sdk';
 import { Address } from 'viem';
 
 /**
@@ -50,19 +51,9 @@ export type DisplayToken = {
   hasBalance: boolean; // Indicates if this token is in user's wallet
 };
 
-export type HopToken = {
-  chainId: number;
-  address: string;
-  decimals: number;
-  name: string;
-  symbol: string;
-  logosUri?: string[];
-  type?: string;
-};
-
 export type Hop = {
-  tokenIn: HopToken[];
-  tokenOut: HopToken[];
+  tokenIn: TokenData[];
+  tokenOut: TokenData[];
   protocol: string;
   action: string;
   primary: Address;
