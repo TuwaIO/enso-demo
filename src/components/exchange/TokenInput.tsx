@@ -23,6 +23,7 @@ interface TokenInputProps {
   showNetworkInfo?: boolean;
   chains?: readonly Chain[];
   onMaxAmount: () => void;
+  isLoadingRoute?: boolean;
 }
 
 export function TokenInput({
@@ -36,6 +37,7 @@ export function TokenInput({
   onWalletAddressChange,
   chains = [],
   onMaxAmount,
+  isLoadingRoute = false,
 }: TokenInputProps) {
   const [isEditingWalletAddress, setIsEditingWalletAddress] = useState(false);
   const { isCopied, copy } = useCopyToClipboard();
@@ -51,6 +53,9 @@ export function TokenInput({
         })
       : '0';
 
+  // 🚀 Check if this is Buy field and should show loading
+  const shouldShowLoading = label === 'Buy' && isLoadingRoute && (!amount || amount === '0');
+
   return (
     <div className="flex flex-col gap-2 w-full">
       {/* 1. TOP ROW: Label & Wallet Info */}
@@ -60,21 +65,21 @@ export function TokenInput({
         {/* Wallet Address / Actions (Moved to Top Right) */}
         {walletAddress && onWalletAddressChange ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--tuwa-text-tertiary)] hidden sm:inline">To wallet:</span>
-            <div className="flex items-center gap-1 bg-[var(--tuwa-bg-tertiary)] px-2 py-0.5 rounded-md border border-[var(--tuwa-border-primary)]/50">
+            <span className="text-xs text-gray-400 hidden sm:inline">To wallet:</span>
+            <div className="flex items-center gap-1 bg-[var(--tuwa-bg-muted)] px-2 py-0.5 rounded-md border border-[var(--tuwa-border-primary)]/50">
               <span className="text-xs font-mono text-[var(--tuwa-text-secondary)]">
                 {textCenterEllipsis(walletAddress, 4, 4)}
               </span>
               <div className="w-[1px] h-3 bg-[var(--tuwa-border-primary)] mx-1" />
               <button
                 onClick={() => copy(walletAddress)}
-                className="cursor-pointer hover:text-[var(--tuwa-text-primary)] text-[var(--tuwa-text-tertiary)] transition-colors"
+                className="cursor-pointer hover:text-[var(--tuwa-text-primary)] text-gray-400 transition-colors"
               >
                 {isCopied ? <CheckIcon className="w-3 h-3 text-green-500" /> : <ClipboardIcon className="w-3 h-3" />}
               </button>
               <button
                 onClick={() => setIsEditingWalletAddress(true)}
-                className="cursor-pointer hover:text-[var(--tuwa-text-primary)] text-[var(--tuwa-text-tertiary)] transition-colors"
+                className="cursor-pointer hover:text-[var(--tuwa-text-primary)] text-gray-400 transition-colors"
               >
                 <PencilIcon className="w-3 h-3" />
               </button>
@@ -87,7 +92,7 @@ export function TokenInput({
       </div>
 
       {/* 2. MIDDLE & BOTTOM: The Double Block (Card) */}
-      <div className="bg-[var(--tuwa-bg-tertiary)] rounded-xl border border-[var(--tuwa-border-primary)] overflow-hidden hover:border-[var(--tuwa-border-secondary)] transition-all duration-200 shadow-sm">
+      <div className="bg-[var(--tuwa-bg-muted)] rounded-xl border border-[var(--tuwa-border-primary)] overflow-hidden hover:border-[var(--tuwa-border-secondary)] transition-all duration-200 shadow-sm">
         {/* BLOCK PART 1: Token Selector (Full Width Button) */}
         <button
           onClick={onSelectToken}
@@ -98,7 +103,7 @@ export function TokenInput({
             <div className="relative w-8 h-8">
               {token ? (
                 <>
-                  <div className="w-full h-full rounded-full overflow-hidden bg-[var(--tuwa-bg-tertiary)]">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[var(--tuwa-bg-muted)]">
                     {token.logoUri ? (
                       <img src={token.logoUri} alt={token.symbol} className="w-full h-full object-cover" />
                     ) : (
@@ -111,7 +116,7 @@ export function TokenInput({
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full rounded-full bg-[var(--tuwa-bg-tertiary)] animate-pulse" />
+                <div className="w-full h-full rounded-full bg-[var(--tuwa-bg-muted)] animate-pulse" />
               )}
             </div>
 
@@ -139,14 +144,31 @@ export function TokenInput({
         <div className="p-3">
           {/* Row A: Input + MAX Button */}
           <div className="flex items-center gap-3 mb-2">
-            <input
-              type="number"
-              value={amount}
-              onChange={onAmountChange}
-              placeholder="0.00"
-              disabled={disabled}
-              className="flex-1 bg-transparent text-2xl font-bold text-[var(--tuwa-text-primary)] placeholder:text-[var(--tuwa-text-tertiary)] focus:outline-none disabled:opacity-50 font-mono leading-none"
-            />
+            {/* 🚀 Loading placeholder for Buy input */}
+            {shouldShowLoading ? (
+              <div className="flex-1 flex items-center gap-2">
+                <div className="h-8 bg-[var(--tuwa-bg-secondary)] rounded animate-pulse flex-1"></div>
+                <div className="flex items-center gap-1 text-xs text-gray-400">
+                  <div className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-1 h-1 bg-current rounded-full animate-bounce"></div>
+                </div>
+              </div>
+            ) : (
+              <input
+                type="number"
+                value={amount}
+                onChange={onAmountChange}
+                placeholder={label === 'Buy' && isLoadingRoute ? 'Loading...' : '0.00'}
+                disabled={disabled}
+                className={`flex-1 bg-transparent text-2xl font-bold font-mono leading-none focus:outline-none ${
+                  label === 'Buy' && isLoadingRoute
+                    ? 'text-gray-400 placeholder:text-gray-400'
+                    : 'text-[var(--tuwa-text-primary)] placeholder:text-gray-400'
+                } ${disabled ? 'opacity-50' : ''}`}
+              />
+            )}
+
             {token && label === 'Sell' && (
               <button
                 onClick={onMaxAmount}
@@ -161,14 +183,20 @@ export function TokenInput({
           {/* Row B: USD Value + Balance */}
           <div className="flex justify-between items-center text-xs text-[var(--tuwa-text-secondary)] font-medium">
             <div>
-              {token && amount && parseFloat(amount) > 0 && token.price ? (
+              {/* 🚀 USD loading placeholder */}
+              {shouldShowLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-3 bg-[var(--tuwa-bg-secondary)] rounded animate-pulse"></div>
+                  <span className="text-gray-400">Calculating...</span>
+                </div>
+              ) : token && amount && parseFloat(amount) > 0 && token.price ? (
                 `≈ $${(parseFloat(amount) * token.price).toFixed(2)}`
               ) : (
-                <span className="text-[var(--tuwa-text-tertiary)]">$0.00</span>
+                <span className="text-gray-400">$0.00</span>
               )}
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[var(--tuwa-text-tertiary)]">Balance:</span>
+              <span className="text-gray-400">Balance:</span>
               <span className="text-[var(--tuwa-text-primary)] truncate max-w-[120px]" title={formattedBalance}>
                 {formattedBalance}
               </span>

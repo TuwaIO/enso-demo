@@ -3,7 +3,8 @@
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import { appEVMChains } from '@/configs/appConfig';
 import { SortedBalanceItem } from '@/server/api/types/enso';
@@ -12,6 +13,23 @@ import { api } from '@/utils/trpc';
 import { ExchangeForm } from './exchange/ExchangeForm';
 import { ExchangeHeader } from './exchange/ExchangeHeader';
 import { TokenSelectModal } from './TokenSelectModal';
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export default function ExchangePage() {
   const searchParams = useSearchParams();
@@ -28,17 +46,19 @@ export default function ExchangePage() {
   const [slippage, setSlippage] = useState('0.5');
   const [recipientAddress, setRecipientAddress] = useState('');
 
-  // State for UI feedback
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // 🚀 Debounced amount for API calls
+  const debouncedFromAmount = useDebounce(fromAmount, 800);
 
-  // Cross-chain state
-  // Destination chain defaults to connected chain, but can be changed
+  // Cross-chain state - track selected chains for both from and to
+  const [fromChainId, setFromChainId] = useState<number>(1);
   const [destinationChainId, setDestinationChainId] = useState<number>(1);
 
   // State for token selection modal
   const [isSelectingFromToken, setIsSelectingFromToken] = useState(false);
   const [isSelectingToToken, setIsSelectingToToken] = useState(false);
+
+  // Track initialization to prevent cascading effects
+  const isInitializedRef = useRef(false);
 
   // Determine if wallet is connected and is EVM
   const isEVMWallet =
@@ -50,21 +70,23 @@ export default function ExchangePage() {
   const walletAddress = activeConnection?.address ?? '';
 
   // Use the chain ID from the connected wallet if available, otherwise use Ethereum mainnet
-  const chainId = isEVMWallet ? Number(activeConnection?.chainId ?? 1) : 1;
+  const walletChainId = isEVMWallet ? Number(activeConnection?.chainId ?? 1) : 1;
 
-  // Update destination chain when wallet chain changes (initially)
+  // Initialize chains when wallet connects (only once)
   useEffect(() => {
-    if (chainId && destinationChainId === 1) {
+    if (walletChainId && !isInitializedRef.current) {
       // eslint-disable-next-line
-      setDestinationChainId(chainId);
+      setFromChainId(walletChainId);
+      setDestinationChainId(walletChainId);
+      isInitializedRef.current = true;
     }
-  }, [chainId, destinationChainId]);
+  }, [walletChainId]);
 
-  // Fetch wallet balances
-  const { data: balances } = api.enso.getWalletBalances.useQuery(
+  // Fetch balances for wallet chain
+  const { data: walletChainBalances } = api.enso.getWalletBalances.useQuery(
     {
       address: walletAddress,
-      chainId,
+      chainId: walletChainId,
     },
     {
       enabled: !!walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress),
@@ -73,98 +95,189 @@ export default function ExchangePage() {
     },
   );
 
-  // Set initial from token based on URL param
-  useEffect(() => {
-    if (balances && fromTokenAddress && !fromToken) {
-      const token = balances.find((t) => t.token.toLowerCase() === fromTokenAddress.toLowerCase());
-      if (token) {
-        // eslint-disable-next-line
-        setFromToken(token);
-      }
-    }
-  }, [balances, fromTokenAddress, fromToken]);
-
-  // Handle token swap
-  const handleSwapTokens = () => {
-    const tempToken = fromToken;
-    const tempAmount = fromAmount;
-
-    setFromToken(toToken);
-    setToToken(tempToken);
-
-    // Swap amounts implies exact input becomes exact output which we don't fully support vertically without recalculation
-    // For now, keep "From" amount as the input driver if possible, or swap values
-    setFromAmount(toAmount);
-    setToAmount(tempAmount);
-
-    // If we are swapping across chains, we might need to swap chainIds too theoretically,
-    // but source chain is locked to wallet.
-    // If destination chain was different, we can't easily swap if source chain doesn't match wallet.
-    // So usually swap button is disabled or resets destination chain to current if cross-chain logic is strict.
-    // For this demo, let's just reset destination chain to current if it was different?
-    // Or assume user wants to send back. But user can only send from connected chain.
-    setDestinationChainId(chainId);
-  };
-
-  // Get optimal route between tokens
-  const {
-    data: optimalRoute,
-    refetch: refetchOptimalRoute,
-    isLoading: isLoadingRoute,
-  } = api.enso.getOptimalRoute.useQuery(
+  // Fetch balances for from chain (if different from wallet chain)
+  const { data: fromChainBalances } = api.enso.getWalletBalances.useQuery(
     {
-      fromToken: fromToken?.token || '',
-      toToken: toToken?.token || '',
-      amount: fromAmount ? (parseFloat(fromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString() : '0',
-      chainId, // Source chain
-      slippage: parseFloat(slippage),
-      fromAddress: walletAddress,
-      receiver: recipientAddress || undefined,
-      destinationChainId, // Destination chain for cross-chain swaps
+      address: walletAddress,
+      chainId: fromChainId,
     },
     {
-      enabled: !!fromToken && !!toToken && !!fromAmount && parseFloat(fromAmount) > 0 && !!walletAddress,
-      retry: 1,
+      enabled: !!walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress) && fromChainId !== walletChainId,
+      retry: 2,
       refetchOnWindowFocus: false,
-      // Refetch automatically? We'll handle via explicit timer to be safe and efficient
     },
   );
 
-  // Handle optimal route data changes
-  useEffect(() => {
-    if (optimalRoute && optimalRoute.toAmount && toToken) {
-      // Convert the toAmount from wei to the token's decimal representation
-      const convertedAmount = (Number(optimalRoute.toAmount) / Math.pow(10, toToken.decimals || 18)).toString();
+  // Fetch balances for destination chain (if different from others)
+  const { data: destinationChainBalances } = api.enso.getWalletBalances.useQuery(
+    {
+      address: walletAddress,
+      chainId: destinationChainId,
+    },
+    {
+      enabled:
+        !!walletAddress &&
+        /^0x[a-fA-F0-9]{40}$/.test(walletAddress) &&
+        destinationChainId !== walletChainId &&
+        destinationChainId !== fromChainId,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  );
 
-      // Using simple formatted string to avoid infinite loops if precision varies slightly
-      // Only update if significantly different or if toAmount was empty
-      if (toAmount !== convertedAmount) {
-        // Check if user is currently editing "To" field?
-        // Basic collision avoidance: if we just fetched a route strictly based on FromAmount, we update ToAmount.
-        // eslint-disable-next-line
-        setToAmount(convertedAmount);
+  // 🔄 Consolidated balance management using useMemo
+  const allBalances = useMemo(() => {
+    const balances: Record<number, SortedBalanceItem[]> = {};
+
+    if (walletChainBalances) {
+      balances[walletChainId] = walletChainBalances;
+    }
+
+    if (fromChainBalances && fromChainId !== walletChainId) {
+      balances[fromChainId] = fromChainBalances;
+    }
+
+    if (destinationChainBalances && destinationChainId !== walletChainId && destinationChainId !== fromChainId) {
+      balances[destinationChainId] = destinationChainBalances;
+    }
+
+    console.log(
+      '🔄 Updated balances:',
+      Object.keys(balances)
+        .map((chainId) => `Chain ${chainId}: ${balances[Number(chainId)]?.length || 0} tokens`)
+        .join(', '),
+    );
+
+    return balances;
+  }, [
+    walletChainBalances,
+    fromChainBalances,
+    destinationChainBalances,
+    walletChainId,
+    fromChainId,
+    destinationChainId,
+  ]);
+
+  // Get balances for specific chain
+  const getBalancesForChain = useCallback(
+    (chainId: number): SortedBalanceItem[] => {
+      return allBalances[chainId] || [];
+    },
+    [allBalances],
+  );
+
+  // Set initial from token based on URL param (only when balances change)
+  useEffect(() => {
+    if (!fromToken && fromTokenAddress) {
+      const currentFromBalances = getBalancesForChain(fromChainId);
+      if (currentFromBalances.length > 0) {
+        const token = currentFromBalances.find((t) => t.token.toLowerCase() === fromTokenAddress.toLowerCase());
+        if (token) {
+          // Use setTimeout to avoid synchronous state update in effect
+          setTimeout(() => setFromToken(token), 0);
+        }
       }
     }
-  }, [optimalRoute, toToken]); // Removed intoAmount from dependency to avoid loop
+  }, [allBalances, fromTokenAddress, fromToken, fromChainId, getBalancesForChain]);
 
-  // Handle from amount change
+  // 🔒 Enhanced token swap with protection mechanisms
+  const handleSwapTokens = () => {
+    // 🛡️ Protection 1: Check if toToken has balance (can't swap to token with 0 balance as fromToken)
+    if (toToken && toToken.formattedBalance <= 0) {
+      toast.error('❌ Cannot swap: destination token has no balance in your wallet', {
+        containerId: 'exchange',
+      });
+      return;
+    }
+
+    // 🛡️ Protection 2: Check if toToken exists in balances (cross-chain protection)
+    if (toToken) {
+      const toChainBalances = getBalancesForChain(destinationChainId);
+      const tokenInWallet = toChainBalances.find(
+        (balance) => balance.token.toLowerCase() === toToken.token.toLowerCase(),
+      );
+
+      if (!tokenInWallet || tokenInWallet.formattedBalance <= 0) {
+        toast.error('❌ Cannot swap: token not available in your wallet or has zero balance', {
+          containerId: 'exchange',
+        });
+        return;
+      }
+    }
+
+    console.log('🔄 Swapping tokens with protection...');
+    console.log('From:', fromToken?.symbol, '→ To:', toToken?.symbol);
+
+    // Store current values
+    const tempToken = fromToken;
+    const tempChainId = fromChainId;
+
+    // Perform swap
+    setFromToken(toToken);
+    setToToken(tempToken);
+    setFromChainId(destinationChainId);
+    setDestinationChainId(tempChainId);
+
+    // 🛡️ Protection 3: Reset amounts to 0 to prevent value inconsistencies
+    console.log('💰 Resetting amounts to prevent value inconsistencies');
+    setFromAmount('0');
+    setToAmount('0');
+
+    // Success toast
+    toast.success(`🔄 Swapped ${tempToken?.symbol} ↔ ${toToken?.symbol}`, {
+      containerId: 'exchange',
+    });
+
+    console.log('✅ Token swap completed successfully');
+  };
+
+  // 🛡️ Enhanced from amount change with balance validation and auto-max
   const handleFromAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Allow only numbers and decimal point
+    if (!/^\d*\.?\d*$/.test(value)) {
+      return;
+    }
+
+    // 🛡️ Protection 4: Auto-set to max if exceeds balance
+    if (fromToken && value && parseFloat(value) > 0) {
+      const inputAmount = parseFloat(value);
+      const maxBalance = fromToken.formattedBalance;
+
+      if (inputAmount > maxBalance) {
+        // Set to maximum balance instead of rejecting
+        const maxValue = maxBalance.toString();
+        setFromAmount(maxValue);
+
+        toast.error(`💸 Amount exceeds balance! Setting to maximum: ${maxBalance.toFixed(6)} ${fromToken.symbol}`, {
+          containerId: 'exchange',
+        });
+
+        // Calculate toAmount with max value (simple estimation)
+        if (toToken && maxBalance > 0) {
+          const fromPrice = fromToken.price || 0;
+          const toPrice = toToken.price || 0;
+          if (fromPrice > 0 && toPrice > 0) {
+            const estimatedTo = (maxBalance * fromPrice) / toPrice;
+            setToAmount(estimatedTo.toFixed(6));
+          }
+        }
+        return;
+      }
+    }
+
     setFromAmount(value);
 
-    // Debouncing could be added here
+    // Simple estimation (real calculation will happen with debounced value)
     if (fromToken && toToken && value && parseFloat(value) > 0) {
-      // Immediately estimate toAmount based on token prices while waiting for optimal route
       const fromPrice = fromToken.price || 0;
       const toPrice = toToken.price || 0;
 
       if (fromPrice > 0 && toPrice > 0) {
         const estimatedTo = (parseFloat(value) * fromPrice) / toPrice;
-        setToAmount(estimatedTo.toFixed(6)); // Limit decimals to avoid crazy longs
+        setToAmount(estimatedTo.toFixed(6));
       }
-
-      // Allow UI to update first, then refetch
-      // React Query will refetch because key (amount) changed
     } else {
       setToAmount('');
     }
@@ -173,21 +286,77 @@ export default function ExchangePage() {
   // Handle to amount change (Bidirectional approximation)
   const handleToAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+
+    // Allow only numbers and decimal point
+    if (!/^\d*\.?\d*$/.test(value)) {
+      return;
+    }
+
     setToAmount(value);
 
     if (fromToken && toToken && value && parseFloat(value) > 0) {
       // Approximate From Amount: ToAmount * (ToPrice / FromPrice)
-      // Price is usually in USD.
       const fromPrice = fromToken.price || 0;
       const toPrice = toToken.price || 0;
 
       if (fromPrice > 0 && toPrice > 0) {
         const estimatedFrom = (parseFloat(value) * toPrice) / fromPrice;
-        // setFromAmount triggers query update
-        setFromAmount(estimatedFrom.toFixed(6)); // Limit decimals to avoid crazy longs
+
+        // 🛡️ Validate that estimated from amount doesn't exceed balance
+        if (fromToken && estimatedFrom > fromToken.formattedBalance) {
+          toast.warning(
+            `⚠️ Estimated input (${estimatedFrom.toFixed(6)}) would exceed your ${fromToken.symbol} balance`,
+            {
+              containerId: 'exchange',
+            },
+          );
+          return;
+        }
+
+        setFromAmount(estimatedFrom.toFixed(6));
       }
     }
   };
+
+  // 🚀 Get optimal route between tokens with debounced amount
+  const {
+    data: optimalRoute,
+    refetch: refetchOptimalRoute,
+    isLoading: isLoadingRoute,
+  } = api.enso.getOptimalRoute.useQuery(
+    {
+      fromToken: fromToken?.token || '',
+      toToken: toToken?.token || '',
+      amount: debouncedFromAmount
+        ? (parseFloat(debouncedFromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString()
+        : '0',
+      chainId: fromChainId, // Source chain
+      slippage: parseFloat(slippage),
+      fromAddress: walletAddress,
+      receiver: recipientAddress || undefined,
+      destinationChainId, // Destination chain for cross-chain swaps
+    },
+    {
+      enabled:
+        !!fromToken && !!toToken && !!debouncedFromAmount && parseFloat(debouncedFromAmount) > 0 && !!walletAddress,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Handle optimal route data changes (avoid synchronous state updates)
+  useEffect(() => {
+    if (optimalRoute && optimalRoute.toAmount && toToken) {
+      // Convert the toAmount from wei to the token's decimal representation
+      const convertedAmount = (Number(optimalRoute.toAmount) / Math.pow(10, toToken.decimals || 18)).toString();
+
+      // Only update if significantly different
+      if (Math.abs(parseFloat(toAmount || '0') - parseFloat(convertedAmount)) > 0.000001) {
+        // Use setTimeout to avoid synchronous state update
+        setTimeout(() => setToAmount(convertedAmount), 0);
+      }
+    }
+  }, [optimalRoute, toToken, toAmount]);
 
   // Handle slippage change
   const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,22 +364,43 @@ export default function ExchangePage() {
     setSlippage(value);
   };
 
-  // Handle max amount
+  // 🛡️ Enhanced max amount with balance validation
   const handleMaxAmount = () => {
     if (fromToken) {
-      const maxAmount = fromToken.formattedBalance.toString();
-      setFromAmount(maxAmount);
+      const maxAmount = fromToken.formattedBalance;
+
+      if (maxAmount <= 0) {
+        toast.error(`💰 No balance available for ${fromToken.symbol}`, {
+          containerId: 'exchange',
+        });
+        return;
+      }
+
+      console.log(`💯 Setting max amount: ${maxAmount} ${fromToken.symbol}`);
+      setFromAmount(maxAmount.toString());
+
+      // Success toast for MAX usage
+      toast.info(`💯 Using maximum balance: ${maxAmount.toFixed(6)} ${fromToken.symbol}`, {
+        containerId: 'exchange',
+      });
     }
   };
 
   // Handle exchange
   const handleExchange = () => {
-    // Clear previous messages
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
+    // 🛡️ Enhanced validation
     if (!fromToken || !toToken || !fromAmount || !toAmount || !optimalRoute) {
-      setErrorMessage('Please select tokens and enter amounts');
+      toast.error('❌ Please select tokens and enter amounts', {
+        containerId: 'exchange',
+      });
+      return;
+    }
+
+    // Validate balance one more time before exchange
+    if (parseFloat(fromAmount) > fromToken.formattedBalance) {
+      toast.error(`💸 Insufficient balance! Available: ${fromToken.formattedBalance.toFixed(6)} ${fromToken.symbol}`, {
+        containerId: 'exchange',
+      });
       return;
     }
 
@@ -218,6 +408,8 @@ export default function ExchangePage() {
     console.log('-----------------------------------');
     console.log('From Token:', fromToken);
     console.log('To Token:', toToken);
+    console.log('From Chain:', fromChainId);
+    console.log('Destination Chain:', destinationChainId);
     console.log('Amount In:', fromAmount);
     console.log('Amount Out:', toAmount);
     console.log('Slippage:', slippage);
@@ -226,54 +418,94 @@ export default function ExchangePage() {
     console.log('TX Data for Pulsar:', optimalRoute.tx);
     console.log('-----------------------------------');
 
-    setSuccessMessage('Transaction prepared! Check console for details.');
-
-    // Auto-clear success message after 5 seconds
-    setTimeout(() => {
-      setSuccessMessage(null);
-    }, 5000);
+    // Success toast
+    toast.success('🚀 Transaction prepared successfully! Check console for details.', {
+      containerId: 'exchange',
+    });
   };
 
   return (
     <div className="w-full flex justify-center items-start bg-gradient-to-br from-[var(--tuwa-bg-secondary)] to-[var(--tuwa-bg-muted)] gap-4 flex-wrap relative min-h-[calc(100dvh-65px)] pt-8">
       {/* Token Selection Modals */}
       <>
-        {/* Source Token Selector: Filter by balance, Current Chain only */}
+        {/* Source Token Selector: Multi-chain support with dynamic chain selection */}
         <TokenSelectModal
           isOpen={isSelectingFromToken}
           onClose={() => setIsSelectingFromToken(false)}
-          tokens={balances || []}
-          chainId={chainId}
+          tokens={getBalancesForChain(fromChainId)}
+          chainId={fromChainId}
           onSelectToken={(token) => {
+            console.log(`🔄 Selected from token: ${token.symbol} (Balance: ${token.formattedBalance})`);
             setFromToken(token);
-            if (toToken && token.token === toToken.token) {
-              setToToken(null); // Clear destination if same token selected (unless cross chain)
+            if (toToken && token.token === toToken.token && fromChainId === destinationChainId) {
+              setToToken(null); // Clear destination if same token selected on same chain
             }
+            // Clear amounts when changing tokens to prevent inconsistencies
+            setFromAmount('');
+            setToAmount('');
+
+            // Success toast for token selection
+            toast.success(`✅ Selected ${token.symbol} (${token.formattedBalance.toFixed(4)} available)`, {
+              containerId: 'exchange',
+            });
           }}
           selectedTokenAddress={fromToken?.token}
           filterByBalance={true}
-          enableChainSelection={false}
-          disabledTokenAddresses={toToken ? [toToken.token] : []}
+          enableChainSelection={true}
+          chains={appEVMChains}
+          onSelectChain={(newChainId) => {
+            setFromChainId(newChainId);
+            setFromToken(null); // Clear selected token when chain changes
+            setFromAmount('');
+            setToAmount('');
+
+            // Toast for chain change
+            const selectedChain = appEVMChains.find((chain) => chain.id === newChainId);
+            toast.info(`🔗 From network changed to ${selectedChain?.name || 'Unknown'}`, {
+              containerId: 'exchange',
+            });
+          }}
+          disabledTokenAddresses={toToken && fromChainId === destinationChainId ? [toToken.token] : []}
         />
 
-        {/* Destination Token Selector: All tokens, Chain Selection enabled */}
+        {/* Destination Token Selector: Multi-chain support */}
         <TokenSelectModal
           isOpen={isSelectingToToken}
           onClose={() => setIsSelectingToToken(false)}
-          tokens={balances || []} // Note: sending tokens implies we pick from list of KNOWN tokens, API usually returns all tokens for a chain
+          tokens={getBalancesForChain(destinationChainId)}
           chainId={destinationChainId}
           onSelectToken={(token) => {
+            console.log(`🎯 Selected to token: ${token.symbol}`);
             setToToken(token);
-            if (fromToken && token.token === fromToken.token && chainId === destinationChainId) {
+            if (fromToken && token.token === fromToken.token && fromChainId === destinationChainId) {
               setFromToken(null);
             }
+            // Clear amounts when changing tokens
+            setFromAmount('');
+            setToAmount('');
+
+            // Success toast for destination token
+            toast.success(`🎯 Destination set to ${token.symbol}`, {
+              containerId: 'exchange',
+            });
           }}
           selectedTokenAddress={toToken?.token}
           filterByBalance={false}
           enableChainSelection={true}
           chains={appEVMChains}
-          onSelectChain={(newChainId) => setDestinationChainId(newChainId)}
-          disabledTokenAddresses={fromToken ? [fromToken.token] : []}
+          onSelectChain={(newChainId) => {
+            setDestinationChainId(newChainId);
+            setToToken(null); // Clear selected token when chain changes
+            setFromAmount('');
+            setToAmount('');
+
+            // Toast for chain change
+            const selectedChain = appEVMChains.find((chain) => chain.id === newChainId);
+            toast.info(`🔗 Destination network changed to ${selectedChain?.name || 'Unknown'}`, {
+              containerId: 'exchange',
+            });
+          }}
+          disabledTokenAddresses={fromToken && fromChainId === destinationChainId ? [fromToken.token] : []}
         />
       </>
 
@@ -303,10 +535,15 @@ export default function ExchangePage() {
             currentWalletAddress={activeConnection?.address}
             recipientAddress={recipientAddress}
             onRecipientChange={setRecipientAddress}
-            onRefresh={() => refetchOptimalRoute()}
+            onRefresh={() => {
+              refetchOptimalRoute();
+              toast.info('🔄 Refreshing route data...', {
+                containerId: 'exchange',
+                position: 'top-left',
+                autoClose: 1500,
+              });
+            }}
             chains={appEVMChains}
-            errorMessage={errorMessage}
-            successMessage={successMessage}
           />
         </div>
       </div>

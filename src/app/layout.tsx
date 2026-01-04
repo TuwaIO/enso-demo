@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import Head from 'next/head';
 import { ReactNode } from 'react';
+import { ToastContainer } from 'react-toastify';
 
 import { Header } from '@/components/Header';
 import { Providers } from '@/providers';
@@ -58,6 +59,31 @@ export default async function RootLayout({
         <Providers>
           <Header />
           {children}
+
+          {/* Toast Container */}
+          <ToastContainer
+            className="Exchange_toast"
+            containerId="exchange"
+            position="top-right"
+            autoClose={4000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+            style={{
+              fontSize: '14px',
+            }}
+            toastStyle={{
+              backgroundColor: 'var(--tuwa-bg-primary)',
+              color: 'var(--tuwa-text-primary)',
+              border: '1px solid var(--tuwa-border-primary)',
+              borderRadius: '12px',
+            }}
+          />
         </Providers>
       </body>
     </html>
