@@ -1,10 +1,8 @@
 'use client';
 
-import { PriceData } from '@ensofinance/sdk';
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid';
-import { Chain } from 'viem/chains';
 
-import { Hop, SortedBalanceItem } from '@/server/api/types/enso';
+import { ExchangeFormProps } from '@/types/exchange';
 
 import { ExchangeButton } from './ExchangeButton';
 import { ExchangeDetails } from './ExchangeDetails';
@@ -14,36 +12,6 @@ import { RouteDetails } from './RouteDetails';
 import { SlippageSettings } from './SlippageSettings';
 import { SwapButton } from './SwapButton';
 import { TokenInput } from './TokenInput';
-
-interface ExchangeFormProps {
-  fromToken: SortedBalanceItem | null;
-  toToken: SortedBalanceItem | null;
-  fromAmount: string;
-  toAmount: string;
-  slippage: string;
-  isLoadingRoute: boolean;
-  isErrorRoute: boolean;
-  walletConnected: boolean;
-  route?: Hop[];
-  gas?: number | string;
-  gasPrice?: number | string;
-  nativeCurrency?: PriceData;
-  minAmountOut?: string;
-  priceImpact?: number;
-  onFromAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onToAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSlippageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectFromToken: () => void;
-  onSelectToToken: () => void;
-  onSwapTokens: () => void;
-  onMaxAmount: () => void;
-  onExchange: () => void;
-  recipientAddress: string;
-  onRecipientChange: (address: string) => void;
-  onRefresh: () => void;
-  chains?: readonly Chain[];
-  currentWalletAddress?: string;
-}
 
 export function ExchangeForm({
   fromToken,
@@ -73,10 +41,23 @@ export function ExchangeForm({
   onRefresh,
   chains,
   currentWalletAddress,
+  needsApproval = false,
+  isApproving = false,
+  onApprove,
 }: ExchangeFormProps) {
   // Determine if exchange button should be disabled
   const isExchangeDisabled =
-    !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0 || isErrorRoute;
+    !fromToken ||
+    !toToken ||
+    !fromAmount ||
+    !toAmount ||
+    parseFloat(fromAmount) === 0 ||
+    isErrorRoute ||
+    (needsApproval && isApproving);
+
+  const handleExecute = () => {
+    onExchange();
+  };
 
   return (
     <div className="p-4">
@@ -182,7 +163,33 @@ export function ExchangeForm({
 
       <div className="h-8"></div>
 
-      <ExchangeButton onExchange={onExchange} disabled={isExchangeDisabled} walletConnected={walletConnected} />
+      <div className="flex gap-2 w-full">
+        {/* Approve Button */}
+        {needsApproval && (
+          <div className="flex-1">
+            <ExchangeButton
+              onExchange={onApprove || (() => {})}
+              disabled={isApproving}
+              walletConnected={walletConnected}
+              label={`Approve ${fromToken?.symbol}`}
+              isLoading={isApproving}
+              variant="secondary"
+            />
+          </div>
+        )}
+
+        {/* Execute Button */}
+        <div className={needsApproval ? 'flex-1' : 'w-full'}>
+          <ExchangeButton
+            onExchange={handleExecute}
+            disabled={isExchangeDisabled || needsApproval} // Block execution if approval needed
+            walletConnected={walletConnected}
+            label={isLoadingRoute ? 'Finding Route...' : 'Execute'}
+            isLoading={isLoadingRoute}
+            variant="primary"
+          />
+        </div>
+      </div>
     </div>
   );
 }

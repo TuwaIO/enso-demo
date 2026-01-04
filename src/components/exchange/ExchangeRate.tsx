@@ -1,5 +1,4 @@
 import { PriceData } from '@ensofinance/sdk';
-import { FireIcon } from '@heroicons/react/20/solid';
 import { useMemo } from 'react';
 import { formatUnits } from 'viem';
 

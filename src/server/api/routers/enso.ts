@@ -1,11 +1,12 @@
 import 'server-only';
 
 import { TRPCError } from '@trpc/server';
+import { parseUnits } from 'viem';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 
-import { getOptimalRoute, getTokens, getWalletBalances } from '../utils/ensoClient';
+import { getApprovalData, getOptimalRoute, getTokens, getWalletBalances } from '../utils/ensoClient';
 import { enrichTokens, logPortfolioStats } from '../utils/tokenEnrichment';
 import { filterLegitimateTokens } from '../utils/tokenFilters';
 import { sortTokensByValue } from '../utils/tokenQuality';
@@ -110,5 +111,23 @@ export const ensoRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Check if token approval is required
+   */
+  getApprovalData: publicProcedure
+    .input(
+      z.object({
+        chainId: z.number().int().positive(),
+        fromAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
+        tokenAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
+        amount: z.string(),
+        decimals: z.number().int().positive(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { chainId, fromAddress, tokenAddress, amount, decimals } = input;
+      return getApprovalData(chainId, fromAddress, tokenAddress, parseUnits(amount, decimals).toString());
     }),
 });

@@ -15,6 +15,7 @@ export function RefreshTimer({ onRefresh, isLoading, intervalMs = 60000 }: Refre
 
   useEffect(() => {
     if (isLoading) {
+      // eslint-disable-next-line
       setProgress(0); // Reset visual when loading
       setTimeLeft(intervalMs);
       return;

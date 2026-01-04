@@ -3,33 +3,19 @@
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { appEVMChains } from '@/configs/appConfig';
+import { useDebounce } from '@/hooks/useDebounce';
 import { SortedBalanceItem } from '@/server/api/types/enso';
-import { api } from '@/utils/trpc';
 
 import { ExchangeForm } from './exchange/ExchangeForm';
 import { ExchangeHeader } from './exchange/ExchangeHeader';
+import { useExchangeApproval } from './exchange/hooks/useExchangeApproval';
+import { useExchangeBalances } from './exchange/hooks/useExchangeBalances';
+import { useExchangeRoute } from './exchange/hooks/useExchangeRoute';
 import { TokenSelectModal } from './TokenSelectModal';
-
-// Custom debounce hook
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 export default function ExchangePage() {
   const searchParams = useSearchParams();
@@ -82,89 +68,13 @@ export default function ExchangePage() {
     }
   }, [walletChainId]);
 
-  // Fetch balances for wallet chain
-  const { data: walletChainBalances } = api.enso.getWalletBalances.useQuery(
-    {
-      address: walletAddress,
-      chainId: walletChainId,
-    },
-    {
-      enabled: !!walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress),
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  );
-
-  // Fetch balances for from chain (if different from wallet chain)
-  const { data: fromChainBalances } = api.enso.getWalletBalances.useQuery(
-    {
-      address: walletAddress,
-      chainId: fromChainId,
-    },
-    {
-      enabled: !!walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress) && fromChainId !== walletChainId,
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  );
-
-  // Fetch balances for destination chain (if different from others)
-  const { data: destinationChainBalances } = api.enso.getWalletBalances.useQuery(
-    {
-      address: walletAddress,
-      chainId: destinationChainId,
-    },
-    {
-      enabled:
-        !!walletAddress &&
-        /^0x[a-fA-F0-9]{40}$/.test(walletAddress) &&
-        destinationChainId !== walletChainId &&
-        destinationChainId !== fromChainId,
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  );
-
-  // 🔄 Consolidated balance management using useMemo
-  const allBalances = useMemo(() => {
-    const balances: Record<number, SortedBalanceItem[]> = {};
-
-    if (walletChainBalances) {
-      balances[walletChainId] = walletChainBalances;
-    }
-
-    if (fromChainBalances && fromChainId !== walletChainId) {
-      balances[fromChainId] = fromChainBalances;
-    }
-
-    if (destinationChainBalances && destinationChainId !== walletChainId && destinationChainId !== fromChainId) {
-      balances[destinationChainId] = destinationChainBalances;
-    }
-
-    console.log(
-      '🔄 Updated balances:',
-      Object.keys(balances)
-        .map((chainId) => `Chain ${chainId}: ${balances[Number(chainId)]?.length || 0} tokens`)
-        .join(', '),
-    );
-
-    return balances;
-  }, [
-    walletChainBalances,
-    fromChainBalances,
-    destinationChainBalances,
+  // Fetch and manage balances using custom hook
+  const { getBalancesForChain } = useExchangeBalances({
+    walletAddress,
     walletChainId,
     fromChainId,
     destinationChainId,
-  ]);
-
-  // Get balances for specific chain
-  const getBalancesForChain = useCallback(
-    (chainId: number): SortedBalanceItem[] => {
-      return allBalances[chainId] || [];
-    },
-    [allBalances],
-  );
+  });
 
   // Set initial from token based on URL param (only when balances change)
   useEffect(() => {
@@ -178,7 +88,7 @@ export default function ExchangePage() {
         }
       }
     }
-  }, [allBalances, fromTokenAddress, fromToken, fromChainId, getBalancesForChain]);
+  }, [fromTokenAddress, fromToken, fromChainId, getBalancesForChain]);
 
   // 🔒 Enhanced token swap with protection mechanisms
   const handleSwapTokens = () => {
@@ -318,32 +228,34 @@ export default function ExchangePage() {
     }
   };
 
-  // 🚀 Get optimal route between tokens with debounced amount
-  const {
-    data: optimalRoute,
-    refetch: refetchOptimalRoute,
-    isLoading: isLoadingRoute,
-    isError: isErrorRoute,
-  } = api.enso.getOptimalRoute.useQuery(
-    {
-      fromToken: fromToken?.token || '',
-      toToken: toToken?.token || '',
-      amount: debouncedFromAmount
-        ? (parseFloat(debouncedFromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString()
-        : '0',
-      chainId: fromChainId, // Source chain
-      slippage: parseFloat(slippage),
-      fromAddress: walletAddress,
-      receiver: recipientAddress || undefined,
-      destinationChainId, // Destination chain for cross-chain swaps
-    },
-    {
-      enabled:
-        !!fromToken && !!toToken && !!debouncedFromAmount && parseFloat(debouncedFromAmount) > 0 && !!walletAddress,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  );
+  // 🚀 Get optimal route using custom hook
+  const { optimalRoute, refetchOptimalRoute, isLoadingRoute, isErrorRoute } = useExchangeRoute({
+    fromToken,
+    toToken,
+    debouncedFromAmount,
+    fromChainId,
+    destinationChainId,
+    slippage,
+    walletAddress,
+    recipientAddress,
+  });
+
+  // 🔍 Check for approval using custom hook
+  const { approvalData, needsApproval } = useExchangeApproval({
+    fromToken,
+    walletAddress,
+    fromAmount,
+    toAmount,
+  });
+  const isApproving = false; // TODO: Implement actual approval state
+
+  const handleApprove = async () => {
+    if (!approvalData) return;
+    console.log('📝 Approving token...', {
+      ...approvalData,
+    });
+    // TODO: Implement actual approval transaction
+  };
 
   // Handle optimal route data changes (avoid synchronous state updates)
   useEffect(() => {
@@ -549,6 +461,9 @@ export default function ExchangePage() {
               });
             }}
             chains={appEVMChains}
+            needsApproval={needsApproval}
+            isApproving={isApproving}
+            onApprove={handleApprove}
           />
         </div>
       </div>

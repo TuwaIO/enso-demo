@@ -5,26 +5,10 @@ import { CheckIcon, ChevronDownIcon, ClipboardIcon, PencilIcon } from '@heroicon
 import { textCenterEllipsis, useCopyToClipboard } from '@tuwaio/nova-core';
 import React, { useState } from 'react';
 import { formatUnits } from 'viem';
-import { Chain } from 'viem/chains';
 
-import { SortedBalanceItem } from '@/server/api/types/enso';
+import { TokenInputProps } from '@/types/exchange';
 
 import { WalletAddressModal } from '../WalletAddressModal';
-
-interface TokenInputProps {
-  label: string;
-  token: SortedBalanceItem | null;
-  amount: string;
-  onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSelectToken: () => void;
-  disabled?: boolean;
-  walletAddress?: string;
-  onWalletAddressChange?: (address: string) => void;
-  showNetworkInfo?: boolean;
-  chains?: readonly Chain[];
-  onMaxAmount: () => void;
-  isLoadingRoute?: boolean;
-}
 
 export function TokenInput({
   label,
