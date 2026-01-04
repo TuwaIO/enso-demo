@@ -1,6 +1,7 @@
 'use client';
 
 import { PriceData } from '@ensofinance/sdk';
+import { ExclamationCircleIcon } from '@heroicons/react/20/solid';
 import { Chain } from 'viem/chains';
 
 import { Hop, SortedBalanceItem } from '@/server/api/types/enso';
@@ -21,6 +22,7 @@ interface ExchangeFormProps {
   toAmount: string;
   slippage: string;
   isLoadingRoute: boolean;
+  isErrorRoute: boolean;
   walletConnected: boolean;
   route?: Hop[];
   gas?: number | string;
@@ -50,6 +52,7 @@ export function ExchangeForm({
   toAmount,
   slippage,
   isLoadingRoute,
+  isErrorRoute,
   walletConnected,
   route,
   gas,
@@ -72,7 +75,8 @@ export function ExchangeForm({
   currentWalletAddress,
 }: ExchangeFormProps) {
   // Determine if exchange button should be disabled
-  const isExchangeDisabled = !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0;
+  const isExchangeDisabled =
+    !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0 || isErrorRoute;
 
   return (
     <div className="p-4">
@@ -109,8 +113,45 @@ export function ExchangeForm({
         isLoadingRoute={isLoadingRoute}
       />
 
+      {/* 🚨 Error Block - Beautiful TUWA Style */}
+      {isErrorRoute && (
+        <div className="mt-4 p-4 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/20 dark:border-red-800/40 shadow-sm">
+          <div className="flex items-start gap-3">
+            {/* Error Icon */}
+            <div className="flex-shrink-0">
+              <ExclamationCircleIcon className="w-5 h-5 text-red-500 dark:text-red-400 mt-0.5" />
+            </div>
+
+            {/* Error Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-1">Route Not Available</h3>
+              <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                No trading route found for this token pair. This could happen due to:
+              </p>
+              <ul className="mt-2 text-sm text-red-600 dark:text-red-400 space-y-1 ml-4">
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-red-500"></div>
+                  Insufficient liquidity on selected networks
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-red-500"></div>
+                  Invalid amount or token pair
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-red-500"></div>
+                  Cross-chain bridge temporarily unavailable
+                </li>
+              </ul>
+              <div className="mt-3 text-xs text-red-600 dark:text-red-400 font-medium">
+                💡 Try selecting different tokens or adjusting the amount
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Exchange Rate & Refresh */}
-      {fromToken && toToken && Number(fromAmount) > 0 && Number(toAmount) > 0 && (
+      {fromToken && toToken && Number(fromAmount) > 0 && Number(toAmount) > 0 && !isErrorRoute && (
         <>
           <div className="relative flex items-center justify-between mt-2 bg-[var(--tuwa-bg-secondary)] p-3 rounded-lg border border-[var(--tuwa-border-primary)] border-dashed">
             <div className="absolute top-[-17px] right-[-15px]">

@@ -323,6 +323,7 @@ export default function ExchangePage() {
     data: optimalRoute,
     refetch: refetchOptimalRoute,
     isLoading: isLoadingRoute,
+    isError: isErrorRoute,
   } = api.enso.getOptimalRoute.useQuery(
     {
       fromToken: fromToken?.token || '',
@@ -522,6 +523,7 @@ export default function ExchangePage() {
             toAmount={toAmount}
             slippage={slippage}
             isLoadingRoute={isLoadingRoute}
+            isErrorRoute={isErrorRoute}
             walletConnected={!!walletAddress}
             route={optimalRoute?.route}
             gas={optimalRoute?.gas}
