@@ -50,9 +50,19 @@ export type DisplayToken = {
   hasBalance: boolean; // Indicates if this token is in user's wallet
 };
 
+export type HopToken = {
+  chainId: number;
+  address: string;
+  decimals: number;
+  name: string;
+  symbol: string;
+  logosUri?: string[];
+  type?: string;
+};
+
 export type Hop = {
-  tokenIn: Address[];
-  tokenOut: Address[];
+  tokenIn: HopToken[];
+  tokenOut: HopToken[];
   protocol: string;
   action: string;
   primary: Address;
