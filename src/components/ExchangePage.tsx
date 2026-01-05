@@ -336,19 +336,53 @@ export default function ExchangePage() {
       return;
     }
 
-    console.log('🚀 READY FOR PULSAR TRANSACTION 🚀');
-    console.log('-----------------------------------');
-    console.log('From Token:', fromToken);
-    console.log('To Token:', toToken);
-    console.log('From Chain:', fromChainId);
-    console.log('Destination Chain:', destinationChainId);
-    console.log('Amount In:', fromAmount);
-    console.log('Amount Out:', toAmount);
-    console.log('Slippage:', slippage);
-    console.log('Recipient:', recipientAddress || walletAddress);
     console.log('Route Data:', optimalRoute);
-    console.log('TX Data for Pulsar:', optimalRoute.tx);
-    console.log('-----------------------------------');
+
+    await executeTxAction({
+      actionFunction: () =>
+        txActions.swapUsingENSOAPI({
+          data: optimalRoute.tx.data as Hex,
+          to: optimalRoute.tx.to,
+          value: optimalRoute.tx.value as string,
+        }),
+      onSuccessCallback: (tx) => {
+        if (tx.type === TxType.swapUsingENSOAPI) {
+          setIsSwapSuccess(true);
+          setTimeout(() => setIsSwapSuccess(false), 5000);
+          setFromToken(null);
+          setToToken(null);
+          setFromAmount('');
+          setToAmount('');
+          setSlippage('0.5');
+          setRecipientAddress('');
+          setFromChainId(1);
+          setDestinationChainId(1);
+          setIsSelectingFromToken(false);
+          setIsSelectingToToken(false);
+        }
+      },
+      params: {
+        type: TxType.swapUsingENSOAPI,
+        adapter: OrbitAdapter.EVM,
+        desiredChainID: chainIdForApprove,
+        title: ['Swapping', 'Swapped', 'Error during swap', 'Swap tx replaced'],
+        description: [
+          `You start swaping ${fromToken?.symbol} to ${toToken?.symbol}.`,
+          `Success. You swaped ${fromToken?.symbol} to ${toToken?.symbol}. Amount: ${fromToken?.formattedBalance}(${fromToken?.formattedUsdValue})`,
+          'Something went wrong during Swapping.',
+          'Transaction replaced. Please take a look details in your wallet.',
+        ],
+        payload: {
+          chainIdFrom: fromToken?.chainId,
+          chainIdTo: toToken?.chainId,
+          tokenAddressFrom: fromToken?.token,
+          tokenSymbolFrom: fromToken?.symbol,
+          tokenAddressTo: toToken?.token,
+          tokenSymbolTo: toToken?.symbol,
+        },
+        withTrackedModal: true,
+      },
+    });
   };
 
   return (

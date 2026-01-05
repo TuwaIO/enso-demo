@@ -23,8 +23,8 @@ export function useExchangeApproval({ fromToken, walletAddress, fromAmount, toAm
     },
     {
       enabled: !!fromToken && !!walletAddress && parseFloat(fromAmount) > 0 && parseFloat(toAmount) > 0,
-      refetchInterval: 10000,
-      retry: 5,
+      retry: 2,
+      retryDelay: 5000,
     },
   );
 

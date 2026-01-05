@@ -88,10 +88,6 @@ export function TokenSelectModal({
     // Combine all tokens
     const allTokens = [...walletTokensAsDisplay, ...apiTokensAsDisplay];
 
-    console.log(
-      `🚀 Final token counts: wallet=${walletTokensAsDisplay.length}, api=${apiTokensAsDisplay.length}, total=${allTokens.length}`,
-    );
-
     // Enhanced sorting: balance first, then priority, then alphabetical
     return allTokens.sort((a, b) => {
       // First: tokens with balance come first

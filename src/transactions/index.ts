@@ -43,8 +43,6 @@ type SwapUsingENSOAPITX = Transaction & {
     tokenSymbolFrom: string;
     tokenAddressTo: string;
     tokenSymbolTo: string;
-    amountToNative: string;
-    amountToUSD: string;
   };
 };
 

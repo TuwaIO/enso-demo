@@ -289,7 +289,7 @@ export async function getApprovalData(chainId: number, fromAddress: string, toke
 
     // 🎯 Sufficient allowance - no approval needed
     console.log('✨ Sufficient allowance - no approval needed');
-    return undefined;
+    return null;
   } catch (error) {
     console.error('❌ Error fetching Enso Approval data:', error);
     throw new TRPCError({

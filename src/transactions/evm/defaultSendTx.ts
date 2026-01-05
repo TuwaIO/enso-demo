@@ -1,11 +1,32 @@
 import { Config, sendTransaction } from '@wagmi/core';
-import { Hex } from 'viem';
 
-export async function defaultSendTx({ wagmiConfig, data, to }: { wagmiConfig?: Config; data: Hex; to: Hex }) {
+import { GenericTxAction } from '@/transactions';
+
+export async function defaultSendTx({ wagmiConfig, ...props }: { wagmiConfig?: Config } & GenericTxAction) {
   if (wagmiConfig) {
+    if (props.value && props.gas) {
+      return sendTransaction(wagmiConfig, {
+        data: props.data,
+        to: props.to,
+        value: BigInt(props.value),
+        gas: BigInt(props.gas),
+      });
+    } else if (props.value) {
+      return sendTransaction(wagmiConfig, {
+        data: props.data,
+        to: props.to,
+        value: BigInt(props.value),
+      });
+    } else if (props.gas) {
+      return sendTransaction(wagmiConfig, {
+        data: props.data,
+        to: props.to,
+        gas: BigInt(props.gas),
+      });
+    }
     return sendTransaction(wagmiConfig, {
-      data,
-      to,
+      data: props.data,
+      to: props.to,
     });
   }
   return undefined;
