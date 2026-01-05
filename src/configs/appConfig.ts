@@ -30,7 +30,6 @@ export const appEVMChains = [
     rpcUrls: {
       ...mainnet.rpcUrls,
       default: {
-        ...mainnet.rpcUrls.default,
         http: ['https://eth-mainnet.g.alchemy.com/v2/L9Fokyp12OwHmVffqY0Kf'],
       },
     },

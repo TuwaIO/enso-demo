@@ -299,3 +299,24 @@ export async function getApprovalData(chainId: number, fromAddress: string, toke
     });
   }
 }
+
+/**
+ * Get token price data from Enso SDK
+ *
+ * @param chainId - Chain ID where the token exists
+ * @param address - Token address
+ * @returns Promise<Number> Token price in USD
+ */
+export async function getTokenPrice(chainId: number, address: string): Promise<number> {
+  try {
+    const priceData = await ensoClient.getPriceData({
+      chainId,
+      address: address as Address,
+    });
+
+    return Number(priceData.price);
+  } catch (error) {
+    console.error('Error fetching token price:', error);
+    return 0;
+  }
+}

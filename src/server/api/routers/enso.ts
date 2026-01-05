@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 
-import { getApprovalData, getOptimalRoute, getTokens, getWalletBalances } from '../utils/ensoClient';
+import { getApprovalData, getOptimalRoute, getTokenPrice, getTokens, getWalletBalances } from '../utils/ensoClient';
 import { enrichTokens, logPortfolioStats } from '../utils/tokenEnrichment';
 import { filterLegitimateTokens } from '../utils/tokenFilters';
 import { sortTokensByValue } from '../utils/tokenQuality';
@@ -111,6 +111,21 @@ export const ensoRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  /**
+   * Get token price
+   */
+  getTokenPrice: publicProcedure
+    .input(
+      z.object({
+        chainId: z.number().int().positive(),
+        address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { chainId, address } = input;
+      return getTokenPrice(chainId, address);
     }),
 
   /**

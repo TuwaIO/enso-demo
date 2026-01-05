@@ -24,6 +24,7 @@ export function TokenInput({
   isLoadingRoute = false,
 }: TokenInputProps) {
   const [isEditingWalletAddress, setIsEditingWalletAddress] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const { isCopied, copy } = useCopyToClipboard();
 
   // Find chain info
@@ -104,8 +105,12 @@ export function TokenInput({
               )}
             </div>
 
-            {/* Text Info: Symbol + Network Name */}
-            <div className="flex flex-col items-start">
+            {/* Text Info: Symbol + Network Name with Tooltip */}
+            <div
+              className="flex flex-col items-start relative"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
               {token ? (
                 <>
                   <span className="text-base font-bold text-[var(--tuwa-text-primary)] leading-none">
@@ -114,6 +119,22 @@ export function TokenInput({
                   <span className="text-[10px] text-[var(--tuwa-text-secondary)] font-medium mt-0.5 group-hover/selector:text-[var(--tuwa-text-primary)] transition-colors">
                     {chainInfo?.name || 'Unknown Network'}
                   </span>
+
+                  {/* Custom Tooltip */}
+                  {showTooltip && (
+                    <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in duration-100">
+                      <div className="bg-[var(--tuwa-bg-primary)] border border-[var(--tuwa-border-secondary)] rounded-lg shadow-xl px-3 py-2 whitespace-nowrap">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold text-[var(--tuwa-text-primary)]">{token.name}</span>
+                          <span className="text-xs text-[var(--tuwa-text-secondary)]">
+                            {token.symbol} on {chainInfo?.name || 'Unknown Network'}
+                          </span>
+                        </div>
+                        {/* Tooltip Arrow */}
+                        <div className="absolute -top-1 left-4 w-2 h-2 bg-[var(--tuwa-bg-primary)] border-t border-l border-[var(--tuwa-border-secondary)] rotate-45" />
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <span className="text-sm font-medium text-[var(--tuwa-text-primary)]">Select Token</span>

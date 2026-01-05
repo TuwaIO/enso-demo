@@ -12,6 +12,7 @@ import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SortedBalanceItem } from '@/server/api/types/enso';
 import { txActions, TxType } from '@/transactions';
+import { api } from '@/utils/trpc';
 
 import { ExchangeForm } from './exchange/ExchangeForm';
 import { ExchangeHeader } from './exchange/ExchangeHeader';
@@ -94,6 +95,36 @@ export default function ExchangePage() {
       }
     }
   }, [fromTokenAddress, fromToken, fromChainId, getBalancesForChain]);
+
+  // 🔄 Fetch price for toToken if it's 0 (API token)
+  const { data: toTokenPrice } = api.enso.getTokenPrice.useQuery(
+    {
+      chainId: destinationChainId,
+      address: toToken?.token || '',
+    },
+    {
+      enabled: !!toToken && toToken.price === 0,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Update toToken with fetched price
+  useEffect(() => {
+    if (toToken && toTokenPrice && toToken.price === 0 && toTokenPrice > 0) {
+      setTimeout(() => {
+        setToToken((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            price: toTokenPrice,
+            usdValue: prev.formattedBalance * toTokenPrice,
+            formattedUsdValue:
+              prev.formattedBalance * toTokenPrice > 0 ? `$${(prev.formattedBalance * toTokenPrice).toFixed(2)}` : '',
+          };
+        });
+      }, 0);
+    }
+  }, [toTokenPrice, toToken]);
 
   // 🔒 Enhanced token swap with protection mechanisms
   const handleSwapTokens = () => {
@@ -344,6 +375,7 @@ export default function ExchangePage() {
           data: optimalRoute.tx.data as Hex,
           to: optimalRoute.tx.to,
           value: optimalRoute.tx.value as string,
+          // gas: optimalRoute.gas.toString(),
         }),
       onSuccessCallback: (tx) => {
         if (tx.type === TxType.swapUsingENSOAPI) {
