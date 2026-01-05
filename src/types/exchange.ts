@@ -32,14 +32,13 @@ export interface ExchangeFormProps extends ExchangeState, ExchangeRouteData {
   onSelectToToken: () => void;
   onSwapTokens: () => void;
   onMaxAmount: () => void;
-  onExchange: () => void;
+  onExchange: () => Promise<void>;
   onRecipientChange: (address: string) => void;
   onRefresh: () => void;
   chains?: readonly Chain[];
   currentWalletAddress?: string;
   needsApproval?: boolean;
-  isApproving?: boolean;
-  onApprove?: () => void;
+  onApprove?: () => Promise<void>;
 }
 
 export interface TokenInputProps {

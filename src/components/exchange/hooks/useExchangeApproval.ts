@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
 
@@ -9,6 +11,8 @@ interface UseExchangeApprovalProps {
 }
 
 export function useExchangeApproval({ fromToken, walletAddress, fromAmount, toAmount }: UseExchangeApprovalProps) {
+  const [needsApproval, setNeedsApproval] = useState(false);
+
   const { data: approvalData } = api.enso.getApprovalData.useQuery(
     {
       chainId: fromToken?.chainId ?? 1,
@@ -24,9 +28,15 @@ export function useExchangeApproval({ fromToken, walletAddress, fromAmount, toAm
     },
   );
 
+  useEffect(() => {
+    setNeedsApproval(!!approvalData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [approvalData?.tx]);
+
   return {
     approvalData,
     chainIdForApprove: fromToken?.chainId ?? 1,
-    needsApproval: !!approvalData,
+    needsApproval,
+    setNeedsApproval,
   };
 }

@@ -65,7 +65,7 @@ export function NetworkSelector({ chains, selectedChainId, onSelectChain }: Netw
                   value={chain.id.toString()}
                   className="group flex items-center gap-3 w-full p-3 rounded-lg outline-none cursor-pointer hover:bg-[var(--tuwa-bg-secondary)] data-[highlighted]:bg-[var(--tuwa-bg-secondary)] data-[state=checked]:bg-[var(--tuwa-bg-secondary)] data-[state=checked]:border data-[state=checked]:border-[var(--tuwa-button-gradient-from)]/30 transition-all duration-150"
                 >
-                  <Web3Icon chainId={chain.id} className="w-8 h-8 rounded-full shadow-sm shrink-0" />
+                  <Web3Icon chainId={chain.id} className="rounded-full shadow-sm shrink-0" />
 
                   <div className="flex flex-col items-start flex-1 min-w-0">
                     <Select.ItemText className="font-semibold text-[var(--tuwa-text-primary)] group-data-[state=checked]:text-[var(--tuwa-button-gradient-from)] truncate">

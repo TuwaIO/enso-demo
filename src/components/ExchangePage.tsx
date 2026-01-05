@@ -35,6 +35,7 @@ export default function ExchangePage() {
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState('0.5');
   const [recipientAddress, setRecipientAddress] = useState('');
+  const [isSwapSuccess, setIsSwapSuccess] = useState(false);
 
   // 🚀 Debounced amount for API calls
   const debouncedFromAmount = useDebounce(fromAmount, 800);
@@ -98,7 +99,7 @@ export default function ExchangePage() {
   const handleSwapTokens = () => {
     // 🛡️ Protection 1: Check if toToken has balance (can't swap to token with 0 balance as fromToken)
     if (toToken && toToken.formattedBalance <= 0) {
-      toast.error('❌ Cannot swap: destination token has no balance in your wallet', {
+      toast.error('Cannot swap: destination token has no balance in your wallet', {
         containerId: 'exchange',
       });
       return;
@@ -112,15 +113,12 @@ export default function ExchangePage() {
       );
 
       if (!tokenInWallet || tokenInWallet.formattedBalance <= 0) {
-        toast.error('❌ Cannot swap: token not available in your wallet or has zero balance', {
+        toast.error('Cannot swap: token not available in your wallet or has zero balance', {
           containerId: 'exchange',
         });
         return;
       }
     }
-
-    console.log('🔄 Swapping tokens with protection...');
-    console.log('From:', fromToken?.symbol, '→ To:', toToken?.symbol);
 
     // Store current values
     const tempToken = fromToken;
@@ -133,7 +131,6 @@ export default function ExchangePage() {
     setDestinationChainId(tempChainId);
 
     // 🛡️ Protection 3: Reset amounts to 0 to prevent value inconsistencies
-    console.log('💰 Resetting amounts to prevent value inconsistencies');
     setFromAmount('0');
     setToAmount('0');
 
@@ -141,8 +138,6 @@ export default function ExchangePage() {
     toast.success(`🔄 Swapped ${tempToken?.symbol} ↔ ${toToken?.symbol}`, {
       containerId: 'exchange',
     });
-
-    console.log('✅ Token swap completed successfully');
   };
 
   // 🛡️ Enhanced from amount change with balance validation and auto-max
@@ -245,13 +240,12 @@ export default function ExchangePage() {
   });
 
   // 🔍 Check for approval using custom hook
-  const { approvalData, needsApproval, chainIdForApprove } = useExchangeApproval({
+  const { approvalData, needsApproval, chainIdForApprove, setNeedsApproval } = useExchangeApproval({
     fromToken,
     walletAddress,
     fromAmount,
     toAmount,
   });
-  const isApproving = false; // TODO: Implement actual approval state
 
   const handleApprove = async () => {
     if (!approvalData) return;
@@ -264,7 +258,7 @@ export default function ExchangePage() {
         }),
       onSuccessCallback: (tx) => {
         if (tx.type === TxType.approveENSOContact) {
-          console.log(`Tx succeed`);
+          setNeedsApproval(false);
         }
       },
       params: {
@@ -314,26 +308,18 @@ export default function ExchangePage() {
   const handleMaxAmount = () => {
     if (fromToken) {
       const maxAmount = fromToken.formattedBalance;
-
       if (maxAmount <= 0) {
         toast.error(`💰 No balance available for ${fromToken.symbol}`, {
           containerId: 'exchange',
         });
         return;
       }
-
-      console.log(`💯 Setting max amount: ${maxAmount} ${fromToken.symbol}`);
       setFromAmount(maxAmount.toString());
-
-      // Success toast for MAX usage
-      toast.info(`💯 Using maximum balance: ${maxAmount.toFixed(6)} ${fromToken.symbol}`, {
-        containerId: 'exchange',
-      });
     }
   };
 
   // Handle exchange
-  const handleExchange = () => {
+  const handleExchange = async () => {
     // 🛡️ Enhanced validation
     if (!fromToken || !toToken || !fromAmount || !toAmount || !optimalRoute) {
       toast.error('❌ Please select tokens and enter amounts', {
@@ -363,11 +349,6 @@ export default function ExchangePage() {
     console.log('Route Data:', optimalRoute);
     console.log('TX Data for Pulsar:', optimalRoute.tx);
     console.log('-----------------------------------');
-
-    // Success toast
-    toast.success('🚀 Transaction prepared successfully! Check console for details.', {
-      containerId: 'exchange',
-    });
   };
 
   return (
@@ -381,19 +362,12 @@ export default function ExchangePage() {
           tokens={getBalancesForChain(fromChainId)}
           chainId={fromChainId}
           onSelectToken={(token) => {
-            console.log(`🔄 Selected from token: ${token.symbol} (Balance: ${token.formattedBalance})`);
             setFromToken(token);
             if (toToken && token.token === toToken.token && fromChainId === destinationChainId) {
               setToToken(null); // Clear destination if same token selected on same chain
             }
-            // Clear amounts when changing tokens to prevent inconsistencies
             setFromAmount('');
             setToAmount('');
-
-            // Success toast for token selection
-            toast.success(`✅ Selected ${token.symbol} (${token.formattedBalance.toFixed(4)} available)`, {
-              containerId: 'exchange',
-            });
           }}
           selectedTokenAddress={fromToken?.token}
           filterByBalance={true}
@@ -421,19 +395,12 @@ export default function ExchangePage() {
           tokens={getBalancesForChain(destinationChainId)}
           chainId={destinationChainId}
           onSelectToken={(token) => {
-            console.log(`🎯 Selected to token: ${token.symbol}`);
             setToToken(token);
             if (fromToken && token.token === fromToken.token && fromChainId === destinationChainId) {
               setFromToken(null);
             }
-            // Clear amounts when changing tokens
             setFromAmount('');
             setToAmount('');
-
-            // Success toast for destination token
-            toast.success(`🎯 Destination set to ${token.symbol}`, {
-              containerId: 'exchange',
-            });
           }}
           selectedTokenAddress={toToken?.token}
           filterByBalance={false}
@@ -441,7 +408,7 @@ export default function ExchangePage() {
           chains={appEVMChains}
           onSelectChain={(newChainId) => {
             setDestinationChainId(newChainId);
-            setToToken(null); // Clear selected token when chain changes
+            setToToken(null);
             setFromAmount('');
             setToAmount('');
 
@@ -461,43 +428,47 @@ export default function ExchangePage() {
           <ExchangeHeader title="Token Exchange" />
 
           {/* Exchange Form */}
-          <ExchangeForm
-            fromToken={fromToken}
-            toToken={toToken}
-            fromAmount={fromAmount}
-            toAmount={toAmount}
-            slippage={slippage}
-            isLoadingRoute={isLoadingRoute}
-            isErrorRoute={isErrorRoute}
-            walletConnected={!!walletAddress}
-            route={optimalRoute?.route}
-            gas={optimalRoute?.gas}
-            gasPrice={optimalRoute?.gasPrice}
-            nativeCurrency={optimalRoute?.nativeCurrency}
-            minAmountOut={optimalRoute?.minAmountOut}
-            priceImpact={optimalRoute?.priceImpact != null ? Number(optimalRoute.priceImpact) : undefined}
-            onFromAmountChange={handleFromAmountChange}
-            onToAmountChange={handleToAmountChange}
-            onSlippageChange={handleSlippageChange}
-            onSelectFromToken={() => setIsSelectingFromToken(true)}
-            onSelectToToken={() => setIsSelectingToToken(true)}
-            onSwapTokens={handleSwapTokens}
-            onMaxAmount={handleMaxAmount}
-            onExchange={handleExchange}
-            currentWalletAddress={activeConnection?.address}
-            recipientAddress={recipientAddress}
-            onRecipientChange={setRecipientAddress}
-            onRefresh={() => {
-              refetchOptimalRoute();
-              toast.info('🔄 Refreshing route data...', {
-                containerId: 'exchange',
-              });
-            }}
-            chains={appEVMChains}
-            needsApproval={needsApproval}
-            isApproving={isApproving}
-            onApprove={handleApprove}
-          />
+          {isSwapSuccess ? (
+            // TODO: need content for success
+            <h1>Swap succed</h1>
+          ) : (
+            <ExchangeForm
+              fromToken={fromToken}
+              toToken={toToken}
+              fromAmount={fromAmount}
+              toAmount={toAmount}
+              slippage={slippage}
+              isLoadingRoute={isLoadingRoute}
+              isErrorRoute={isErrorRoute}
+              walletConnected={!!walletAddress}
+              route={optimalRoute?.route}
+              gas={optimalRoute?.gas}
+              gasPrice={optimalRoute?.gasPrice}
+              nativeCurrency={optimalRoute?.nativeCurrency}
+              minAmountOut={optimalRoute?.minAmountOut}
+              priceImpact={optimalRoute?.priceImpact != null ? Number(optimalRoute.priceImpact) : undefined}
+              onFromAmountChange={handleFromAmountChange}
+              onToAmountChange={handleToAmountChange}
+              onSlippageChange={handleSlippageChange}
+              onSelectFromToken={() => setIsSelectingFromToken(true)}
+              onSelectToToken={() => setIsSelectingToToken(true)}
+              onSwapTokens={handleSwapTokens}
+              onMaxAmount={handleMaxAmount}
+              onExchange={handleExchange}
+              currentWalletAddress={activeConnection?.address}
+              recipientAddress={recipientAddress}
+              onRecipientChange={setRecipientAddress}
+              onRefresh={() => {
+                refetchOptimalRoute();
+                toast.info('🔄 Refreshing route data...', {
+                  containerId: 'exchange',
+                });
+              }}
+              chains={appEVMChains}
+              needsApproval={needsApproval}
+              onApprove={handleApprove}
+            />
+          )}
         </div>
       </div>
     </div>

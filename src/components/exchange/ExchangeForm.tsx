@@ -42,22 +42,11 @@ export function ExchangeForm({
   chains,
   currentWalletAddress,
   needsApproval = false,
-  isApproving = false,
   onApprove,
 }: ExchangeFormProps) {
   // Determine if exchange button should be disabled
   const isExchangeDisabled =
-    !fromToken ||
-    !toToken ||
-    !fromAmount ||
-    !toAmount ||
-    parseFloat(fromAmount) === 0 ||
-    isErrorRoute ||
-    (needsApproval && isApproving);
-
-  const handleExecute = () => {
-    onExchange();
-  };
+    !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0 || isErrorRoute || needsApproval;
 
   return (
     <div className="p-4">
@@ -165,15 +154,12 @@ export function ExchangeForm({
 
       <div className="flex gap-2 w-full">
         {/* Approve Button */}
-        {needsApproval && (
+        {needsApproval && onApprove && (
           <div className="flex-1">
             <ExchangeButton
-              onExchange={onApprove || (() => {})}
-              disabled={isApproving}
+              onExchange={onApprove}
               walletConnected={walletConnected}
               label={`Approve ${fromToken?.symbol}`}
-              isLoading={isApproving}
-              variant="secondary"
             />
           </div>
         )}
@@ -181,12 +167,11 @@ export function ExchangeForm({
         {/* Execute Button */}
         <div className={needsApproval ? 'flex-1' : 'w-full'}>
           <ExchangeButton
-            onExchange={handleExecute}
+            onExchange={onExchange}
             disabled={isExchangeDisabled || needsApproval} // Block execution if approval needed
             walletConnected={walletConnected}
             label={isLoadingRoute ? 'Finding Route...' : 'Execute'}
             isLoading={isLoadingRoute}
-            variant="primary"
           />
         </div>
       </div>
