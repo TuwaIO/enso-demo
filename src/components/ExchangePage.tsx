@@ -5,10 +5,13 @@ import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Hex } from 'viem';
 
 import { appEVMChains } from '@/configs/appConfig';
+import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SortedBalanceItem } from '@/server/api/types/enso';
+import { txActions, TxType } from '@/transactions';
 
 import { ExchangeForm } from './exchange/ExchangeForm';
 import { ExchangeHeader } from './exchange/ExchangeHeader';
@@ -20,6 +23,7 @@ import { TokenSelectModal } from './TokenSelectModal';
 export default function ExchangePage() {
   const searchParams = useSearchParams();
   const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
+  const executeTxAction = usePulsarStore((state) => state.executeTxAction);
 
   // Get token address from URL query params
   const fromTokenAddress = searchParams.get('from') || '';
@@ -241,7 +245,7 @@ export default function ExchangePage() {
   });
 
   // 🔍 Check for approval using custom hook
-  const { approvalData, needsApproval } = useExchangeApproval({
+  const { approvalData, needsApproval, chainIdForApprove } = useExchangeApproval({
     fromToken,
     walletAddress,
     fromAmount,
@@ -251,10 +255,39 @@ export default function ExchangePage() {
 
   const handleApprove = async () => {
     if (!approvalData) return;
-    console.log('📝 Approving token...', {
-      ...approvalData,
+
+    await executeTxAction({
+      actionFunction: () =>
+        txActions.approveENSOContact({
+          data: approvalData.tx.data as Hex,
+          to: approvalData.tx.to,
+        }),
+      onSuccessCallback: (tx) => {
+        if (tx.type === TxType.approveENSOContact) {
+          console.log(`Tx succeed`);
+        }
+      },
+      params: {
+        type: TxType.approveENSOContact,
+        adapter: OrbitAdapter.EVM,
+        desiredChainID: chainIdForApprove,
+        title: ['Approving', 'Approved', 'Error during approval', 'Approve tx replaced'],
+        description: [
+          `You can swap ${fromToken?.symbol} to ${toToken?.symbol} after approve.`,
+          `Success. You approve ${fromToken?.symbol}. Amount: ${fromToken?.formattedBalance}(${fromToken?.formattedUsdValue}). Spender: ${approvalData.spender}`,
+          'Something went wrong during approval.',
+          'Transaction replaced. Please take a look details in your wallet.',
+        ],
+        payload: {
+          chainId: chainIdForApprove,
+          amountNative: fromToken?.formattedBalance,
+          amountUSD: fromToken?.formattedUsdValue,
+          tokenAddress: fromToken?.token,
+          tokenSymbol: fromToken?.symbol,
+        },
+        withTrackedModal: true,
+      },
     });
-    // TODO: Implement actual approval transaction
   };
 
   // Handle optimal route data changes (avoid synchronous state updates)

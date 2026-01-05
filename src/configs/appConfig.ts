@@ -25,7 +25,16 @@ export const appConfig = {
 };
 
 export const appEVMChains = [
-  mainnet,
+  {
+    ...mainnet,
+    rpcUrls: {
+      ...mainnet.rpcUrls,
+      default: {
+        ...mainnet.rpcUrls.default,
+        http: ['https://eth-mainnet.g.alchemy.com/v2/L9Fokyp12OwHmVffqY0Kf'],
+      },
+    },
+  },
   sepolia,
   polygon,
   polygonZkEvm,

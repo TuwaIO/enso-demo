@@ -26,6 +26,7 @@ export function useExchangeApproval({ fromToken, walletAddress, fromAmount, toAm
 
   return {
     approvalData,
+    chainIdForApprove: fromToken?.chainId ?? 1,
     needsApproval: !!approvalData,
   };
 }
