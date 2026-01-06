@@ -40,7 +40,7 @@
     "@trpc/react-query": "^11.8.1",
     "@trpc/server": "^11.8.1",
     "@tuwaio/orbit-core": "^0.2.1",
-    "@tuwaio/orbit-evm": "^0.2.3",
+    "@tuwaio/orbit-evm": "^0.2.4",
     "@tuwaio/satellite-core": "^0.2.1",
     "@tuwaio/satellite-evm": "^0.2.3",
     "@tuwaio/satellite-react": "^0.2.3",
