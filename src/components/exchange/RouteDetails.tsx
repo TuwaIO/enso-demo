@@ -1,9 +1,9 @@
-import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { motion, Variants } from 'framer-motion';
 import { useState } from 'react';
 
+import { TokenWithNetworkBadge } from '@/components/TokenWithNetworkBadge';
 import { Hop } from '@/server/api/types/enso';
 
 interface RouteDetailsProps {
@@ -23,22 +23,11 @@ export function RouteDetails({ route }: RouteDetailsProps) {
       <div className="flex flex-col items-center justify-center relative group shrink-0 select-none">
         {/* Icon Container */}
         <motion.div
-          className="relative w-9 h-9"
+          className="relative w-10 h-10"
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-          {/* Main Token Icon */}
-          <div className="w-full h-full rounded-full overflow-hidden bg-[var(--tuwa-bg-muted)] border border-[var(--tuwa-border-secondary)] shadow-sm">
-            {token.logosUri?.[0] ? (
-              <img src={token.logosUri[0]} alt={token.symbol ?? ''} className="w-full h-full object-cover" />
-            ) : (
-              <Web3Icon symbol={token.symbol ?? ''} className="w-full h-full" />
-            )}
-          </div>
-          {/* Chain Badge */}
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[var(--tuwa-bg-secondary)] overflow-hidden bg-[var(--tuwa-bg-primary)] flex items-center justify-center z-10">
-            <Web3Icon chainId={token.chainId} className="w-full h-full" />
-          </div>
+          <TokenWithNetworkBadge token={token} />
         </motion.div>
       </div>
     );

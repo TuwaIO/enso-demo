@@ -1,7 +1,6 @@
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { TxActionButton } from '@tuwaio/nova-transactions';
-import clsx from 'clsx';
 
 import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 
@@ -31,9 +30,9 @@ export function ExchangeButton({
       getLastTxKey={getLastTxKey}
       disabled={disabled || isLoading}
       walletAddress={activeConnection?.address}
-      className={clsx(
-        'w-full p-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 transition-all duration-200',
-      )}
+      className={
+        'w-full p-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 transition-all duration-200'
+      }
     >
       {isLoading && <ArrowPathIcon className="w-5 h-5 animate-spin" />}
       {!walletConnected ? 'Connect Wallet' : label}

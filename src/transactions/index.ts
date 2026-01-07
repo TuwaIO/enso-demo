@@ -23,7 +23,7 @@ export enum TxType {
   swapUsingENSOAPI = 'swapUsingENSOAPI',
 }
 
-type ApproveENSOContactTx = Transaction & {
+export type ApproveENSOContactTx = Transaction & {
   type: TxType.approveENSOContact;
   payload: {
     chainId: number;
@@ -34,7 +34,7 @@ type ApproveENSOContactTx = Transaction & {
   };
 };
 
-type SwapUsingENSOAPITX = Transaction & {
+export type SwapUsingENSOAPITX = Transaction & {
   type: TxType.swapUsingENSOAPI;
   payload: {
     chainIdFrom: number;
@@ -43,6 +43,8 @@ type SwapUsingENSOAPITX = Transaction & {
     tokenSymbolFrom: string;
     tokenAddressTo: string;
     tokenSymbolTo: string;
+    fromAmount: string;
+    toAmount: string;
   };
 };
 

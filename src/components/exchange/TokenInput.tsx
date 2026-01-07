@@ -1,11 +1,11 @@
 'use client';
 
-import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { CheckIcon, ChevronDownIcon, ClipboardIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { textCenterEllipsis, useCopyToClipboard } from '@tuwaio/nova-core';
 import React, { useState } from 'react';
 import { formatUnits } from 'viem';
 
+import { TokenWithNetworkBadge } from '@/components/TokenWithNetworkBadge';
 import { TokenInputProps } from '@/types/exchange';
 
 import { WalletAddressModal } from '../WalletAddressModal';
@@ -87,19 +87,7 @@ export function TokenInput({
             {/* Icon Stack: Token + Network Badge */}
             <div className="relative w-8 h-8">
               {token ? (
-                <>
-                  <div className="w-full h-full rounded-full overflow-hidden bg-[var(--tuwa-bg-muted)]">
-                    {token.logoUri ? (
-                      <img src={token.logoUri} alt={token.symbol} className="w-full h-full object-cover" />
-                    ) : (
-                      <Web3Icon symbol={token.symbol} className="w-full h-full" />
-                    )}
-                  </div>
-                  {/* Network Badge (Absolute Bottom Right) */}
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[var(--tuwa-bg-secondary)] overflow-hidden bg-[var(--tuwa-bg-primary)] flex items-center justify-center">
-                    <Web3Icon chainId={token.chainId} className="w-full h-full" />
-                  </div>
-                </>
+                <TokenWithNetworkBadge token={token} />
               ) : (
                 <div className="w-full h-full rounded-full bg-[var(--tuwa-bg-muted)] animate-pulse" />
               )}

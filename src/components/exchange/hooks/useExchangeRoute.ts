@@ -1,3 +1,5 @@
+import { parseUnits } from 'viem';
+
 import { SortedBalanceItem } from '@/server/api/types/enso';
 import { api } from '@/utils/trpc';
 
@@ -31,9 +33,7 @@ export function useExchangeRoute({
     {
       fromToken: fromToken?.token || '',
       toToken: toToken?.token || '',
-      amount: debouncedFromAmount
-        ? (parseFloat(debouncedFromAmount) * Math.pow(10, fromToken?.decimals || 18)).toString()
-        : '0',
+      amount: debouncedFromAmount ? parseUnits(debouncedFromAmount, fromToken?.decimals || 18).toString() : '0',
       chainId: fromChainId,
       slippage: parseFloat(slippage),
       fromAddress: walletAddress,

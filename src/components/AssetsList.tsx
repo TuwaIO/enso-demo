@@ -1,10 +1,10 @@
 'use client';
 
-import { Web3Icon } from '@bgd-labs/react-web3-icons';
 import { ArrowsRightLeftIcon, BanknotesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
+import { TokenWithNetworkBadge } from '@/components/TokenWithNetworkBadge';
 import { SortedBalanceItem } from '@/server/api/types/enso';
 
 interface AssetsListProps {
@@ -81,7 +81,7 @@ export function AssetsList({ assets, isLoading, error }: AssetsListProps) {
             <div className="group flex items-center gap-4 p-4 rounded-lg bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-muted)] transition-all duration-200 border border-transparent hover:border-[var(--tuwa-border-primary)] relative">
               {/* Token Icon */}
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] flex items-center justify-center text-white font-bold shadow-sm">
-                <Web3Icon symbol={asset.symbol} className="w-full h-full" />
+                <TokenWithNetworkBadge token={asset} size="md" showNetworkBadge={false} />
               </div>
 
               {/* Token Info */}

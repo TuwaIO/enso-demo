@@ -45,7 +45,7 @@ export type DisplayToken = {
   decimals: number;
   name: string;
   symbol: string;
-  logoURI?: string;
+  logoUri?: string;
   balance: string;
   usdValue: string;
   hasBalance: boolean; // Indicates if this token is in user's wallet
