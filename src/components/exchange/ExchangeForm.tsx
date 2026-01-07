@@ -49,7 +49,7 @@ export function ExchangeForm({
     !fromToken || !toToken || !fromAmount || !toAmount || parseFloat(fromAmount) === 0 || isErrorRoute || needsApproval;
 
   return (
-    <div className="p-4">
+    <div className="p-2 sm:p-4">
       {/* Slippage Settings */}
       <SlippageSettings slippage={slippage} onSlippageChange={onSlippageChange} />
 

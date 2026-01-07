@@ -81,11 +81,11 @@ export function TokenInput({
         {/* BLOCK PART 1: Token Selector (Full Width Button) */}
         <button
           onClick={onSelectToken}
-          className="w-full flex items-center justify-between p-3 bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-primary)] transition-colors border-b border-[var(--tuwa-border-primary)]/50 cursor-pointer group/selector"
+          className="w-full flex items-center justify-between p-2 sm:p-3 bg-[var(--tuwa-bg-secondary)] hover:bg-[var(--tuwa-bg-primary)] transition-colors border-b border-[var(--tuwa-border-primary)]/50 cursor-pointer group/selector"
         >
           <div className="flex items-center gap-3">
             {/* Icon Stack: Token + Network Badge */}
-            <div className="relative w-8 h-8">
+            <div className="relative w-6 h-6 sm:w-8 sm:h-8">
               {token ? (
                 <TokenWithNetworkBadge token={token} />
               ) : (
@@ -101,7 +101,7 @@ export function TokenInput({
             >
               {token ? (
                 <>
-                  <span className="text-base font-bold text-[var(--tuwa-text-primary)] leading-none">
+                  <span className="text-sm sm:text-base font-bold text-[var(--tuwa-text-primary)] leading-none">
                     {token.symbol}
                   </span>
                   <span className="text-[10px] text-[var(--tuwa-text-secondary)] font-medium mt-0.5 group-hover/selector:text-[var(--tuwa-text-primary)] transition-colors">
@@ -130,13 +130,13 @@ export function TokenInput({
             </div>
           </div>
 
-          <ChevronDownIcon className="w-5 h-5 text-[var(--tuwa-text-secondary)] group-hover/selector:text-[var(--tuwa-text-primary)] transition-colors" />
+          <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--tuwa-text-secondary)] group-hover/selector:text-[var(--tuwa-text-primary)] transition-colors" />
         </button>
 
         {/* BLOCK PART 2: Inputs & Values */}
-        <div className="p-3">
+        <div className="p-2 sm:p-3">
           {/* Row A: Input + MAX Button */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
             {/* 🚀 Loading placeholder for Buy input */}
             {shouldShowLoading ? (
               <div className="flex-1 flex items-center gap-2">
@@ -154,7 +154,7 @@ export function TokenInput({
                 onChange={onAmountChange}
                 placeholder={label === 'Buy' && isLoadingRoute ? 'Loading...' : '0.00'}
                 disabled={disabled}
-                className={`flex-1 bg-transparent text-2xl font-bold font-mono leading-none focus:outline-none ${
+                className={`flex-1 w-0 min-w-0 bg-transparent text-xl sm:text-2xl font-bold font-mono leading-none focus:outline-none ${
                   label === 'Buy' && isLoadingRoute
                     ? 'text-gray-400 placeholder:text-gray-400'
                     : 'text-[var(--tuwa-text-primary)] placeholder:text-gray-400'
@@ -166,7 +166,7 @@ export function TokenInput({
               <button
                 onClick={onMaxAmount}
                 disabled={!token.amount || disabled}
-                className="cursor-pointer text-[10px] font-bold bg-[var(--tuwa-button-gradient-from)]/10 text-[var(--tuwa-button-gradient-from)] hover:bg-[var(--tuwa-button-gradient-from)] hover:text-white px-2 py-1 rounded transition-all uppercase disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--tuwa-button-gradient-from)]"
+                className="shrink-0 cursor-pointer text-[10px] sm:text-xs font-bold bg-[var(--tuwa-button-gradient-from)]/10 text-[var(--tuwa-button-gradient-from)] sm:hover:bg-[var(--tuwa-button-gradient-from)] sm:hover:text-white active:bg-[var(--tuwa-button-gradient-from)] active:text-white px-2 py-1 rounded transition-all uppercase disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--tuwa-button-gradient-from)]"
               >
                 Max
               </button>
