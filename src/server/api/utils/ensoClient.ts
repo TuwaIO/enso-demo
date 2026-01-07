@@ -273,14 +273,6 @@ export async function getApprovalData(chainId: number, fromAddress: string, toke
     const requiredAmount = BigInt(amount);
     const currentAllowance = allowance as bigint;
 
-    console.log(`🔍 Token approval check:`, {
-      token: tokenAddress,
-      spender: approvalData.spender,
-      required: requiredAmount.toString(),
-      current: currentAllowance.toString(),
-      needsApproval: currentAllowance < requiredAmount,
-    });
-
     // ✅ Return approval data only if more allowance is needed
     if (currentAllowance < requiredAmount) {
       console.log('📝 Approval required - returning approval transaction data');

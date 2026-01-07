@@ -19,6 +19,7 @@ export const PRIORITY_TOKENS = [
   'PEPE', // Pepe
   'ARB', // Arbitrum
   'OP', // Optimism
+  'POL',
 ];
 
 /**

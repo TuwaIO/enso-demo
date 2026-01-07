@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '@/server/api/trpc';
 
 import { getApprovalData, getOptimalRoute, getTokenPrice, getTokens, getWalletBalances } from '../utils/ensoClient';
-import { enrichTokens, logPortfolioStats } from '../utils/tokenEnrichment';
+import { enrichTokens } from '../utils/tokenEnrichment';
 import { filterLegitimateTokens } from '../utils/tokenFilters';
 import { sortTokensByValue } from '../utils/tokenQuality';
 
@@ -60,9 +60,6 @@ export const ensoRouter = createTRPCRouter({
 
         // Sort tokens by quality and value
         const sortedTokens = sortTokensByValue(enrichedTokens);
-
-        // Log portfolio statistics
-        logPortfolioStats(rawBalances.length, sortedTokens);
 
         return sortedTokens;
       } catch (error) {

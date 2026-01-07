@@ -2,9 +2,10 @@
 
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
-import { TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
+// import { TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Confetti from 'react-confetti';
 import { toast } from 'react-toastify';
 import { Hex } from 'viem';
 
@@ -13,7 +14,7 @@ import { appEVMChains } from '@/configs/appConfig';
 import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SortedBalanceItem } from '@/server/api/types/enso';
-import { SwapUsingENSOAPITX, txActions, TxType } from '@/transactions';
+import { ExchangeUsingENSOAPITX, txActions, TxType } from '@/transactions';
 import { api } from '@/utils/trpc';
 
 import { ExchangeForm } from './exchange/ExchangeForm';
@@ -31,27 +32,6 @@ export default function ExchangePage() {
   // Get token address from URL query params
   const fromTokenAddress = searchParams.get('from') || '';
 
-  // State for exchange form
-  const [fromToken, setFromToken] = useState<SortedBalanceItem | null>(null);
-  const [toToken, setToToken] = useState<SortedBalanceItem | null>(null);
-  const [fromAmount, setFromAmount] = useState('');
-  const [toAmount, setToAmount] = useState('');
-  const [slippage, setSlippage] = useState('0.5');
-  const [recipientAddress, setRecipientAddress] = useState('');
-  const [isExchangeSuccess, setIsExchangeSuccess] = useState(false);
-  const [exchangeTx, setExchangeTx] = useState<SwapUsingENSOAPITX | null>(null);
-
-  // 🚀 Debounced amount for API calls
-  const debouncedFromAmount = useDebounce(fromAmount, 800);
-
-  // Cross-chain state - track selected chains for both from and to
-  const [fromChainId, setFromChainId] = useState<number>(1);
-  const [destinationChainId, setDestinationChainId] = useState<number>(1);
-
-  // State for token selection modal
-  const [isSelectingFromToken, setIsSelectingFromToken] = useState(false);
-  const [isSelectingToToken, setIsSelectingToToken] = useState(false);
-
   // Determine if wallet is connected and is EVM
   const isEVMWallet =
     !!activeConnection &&
@@ -61,7 +41,35 @@ export default function ExchangePage() {
   const walletAddress = activeConnection?.address ?? '';
   const walletChainId = isEVMWallet ? Number(activeConnection?.chainId ?? 1) : 1;
 
+  // 🎯 Get initial chain ID based on wallet connection
+  const getInitialChainId = () => {
+    return walletAddress && isEVMWallet ? walletChainId : 1;
+  };
+
+  // State for exchange form
+  const [fromToken, setFromToken] = useState<SortedBalanceItem | null>(null);
+  const [toToken, setToToken] = useState<SortedBalanceItem | null>(null);
+  const [fromAmount, setFromAmount] = useState('');
+  const [toAmount, setToAmount] = useState('');
+  const [slippage, setSlippage] = useState('0.5');
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [isExchangeSuccess, setIsExchangeSuccess] = useState(false);
+  const [exchangeTx, setExchangeTx] = useState<ExchangeUsingENSOAPITX | null>(null);
+
+  // 🚀 Debounced amount for API calls
+  const debouncedFromAmount = useDebounce(fromAmount, 800);
+
+  // Cross-chain state - track selected chains for both from and to
+  const [fromChainId, setFromChainId] = useState<number>(getInitialChainId());
+  const [destinationChainId, setDestinationChainId] = useState<number>(getInitialChainId());
+
+  // State for token selection modal
+  const [isSelectingFromToken, setIsSelectingFromToken] = useState(false);
+  const [isSelectingToToken, setIsSelectingToToken] = useState(false);
+
   const handleReset = () => {
+    const initialChainId = getInitialChainId();
+
     setIsExchangeSuccess(false);
     setExchangeTx(null);
     setFromToken(null);
@@ -70,15 +78,23 @@ export default function ExchangePage() {
     setToAmount('');
     setSlippage('0.5');
     setRecipientAddress('');
-    setFromChainId(1);
-    setDestinationChainId(1);
+    setFromChainId(initialChainId);
+    setDestinationChainId(initialChainId);
     setIsSelectingFromToken(false);
     setIsSelectingToToken(false);
   };
 
+  // 🔄 Initialize chain IDs on wallet connection
   useEffect(() => {
-    // eslint-disable-next-line
+    const initialChainId = getInitialChainId();
+    setFromChainId(initialChainId);
+    setDestinationChainId(initialChainId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConnection?.isConnected]);
+
+  useEffect(() => {
     handleReset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConnection?.address]);
 
   // Fetch and manage balances using custom hook
@@ -135,6 +151,14 @@ export default function ExchangePage() {
 
   // 🔒 Enhanced token swap with protection mechanisms
   const handleSwapTokens = () => {
+    // 🛡️ Protection 0: Check if toToken exists
+    if (!toToken) {
+      toast.error('Cannot swap: please select destination token first', {
+        containerId: 'exchange',
+      });
+      return;
+    }
+
     // 🛡️ Protection 1: Check if toToken has balance (can't swap to token with 0 balance as fromToken)
     if (toToken && toToken.formattedBalance <= 0) {
       toast.error('Cannot swap: destination token has no balance in your wallet', {
@@ -360,105 +384,108 @@ export default function ExchangePage() {
 
   // Handle exchange
   const handleExchange = async () => {
-    setIsExchangeSuccess(true);
-    setExchangeTx({
-      type: TxType.swapUsingENSOAPI,
-      adapter: OrbitAdapter.EVM,
-      title: ['Swapping', 'Swapped', 'Error during swap', 'Swap tx replaced'],
-      description: [
-        `You start swaping ${fromToken?.symbol} to ${toToken?.symbol}.`,
-        `Success. You swaped ${fromToken?.symbol} to ${toToken?.symbol}. Amount: ${fromToken?.formattedBalance}(${fromToken?.formattedUsdValue})`,
-        'Something went wrong during Swapping.',
-        'Transaction replaced. Please take a look details in your wallet.',
-      ],
-      payload: {
-        chainIdFrom: fromToken?.chainId ?? 1,
-        chainIdTo: toToken?.chainId ?? 1,
-        tokenAddressFrom: fromToken?.token ?? '',
-        tokenSymbolFrom: fromToken?.symbol ?? '',
-        tokenAddressTo: toToken?.token ?? '',
-        tokenSymbolTo: toToken?.symbol ?? '',
-        fromAmount: fromAmount ?? '0',
-        toAmount: toAmount ?? '0',
-      },
-      connectorType: 'evm:metamask',
-      from: '0x15cF4b7Ed91E803246f6F210cD96847CE7e84488',
-      tracker: TransactionTracker.Ethereum,
-      chainId: 1,
-      localTimestamp: 1767637855,
-      txKey: '0x961603faab8aa8ead2e6bde72419de012e17d20728c82c647e3d7f1fa1d23447',
-      hash: '0x961603faab8aa8ead2e6bde72419de012e17d20728c82c647e3d7f1fa1d23447',
-      pending: false,
-      isTrackedModalOpen: false,
-      to: '0xf75584ef6673ad213a685a1b58cc0330b8ea22cf',
-      input: '0x00',
-      value: '108499489307683',
-      nonce: 79,
-      maxFeePerGas: '253565528',
-      maxPriorityFeePerGas: '100000',
-      status: TransactionStatus.Success,
-      isError: false,
-      finishedTimestamp: 1767637895,
-    });
-
-    // // 🛡️ Enhanced validation
-    // if (!fromToken || !toToken || !fromAmount || !toAmount || !optimalRoute) {
-    //   toast.error('❌ Please select tokens and enter amounts', {
-    //     containerId: 'exchange',
-    //   });
-    //   return;
-    // }
-    //
-    // // Validate balance one more time before exchange
-    // if (parseFloat(fromAmount) > fromToken.formattedBalance) {
-    //   toast.error(`💸 Insufficient balance! Available: ${fromToken.formattedBalance.toFixed(6)} ${fromToken.symbol}`, {
-    //     containerId: 'exchange',
-    //   });
-    //   return;
-    // }
-    //
-    // await executeTxAction({
-    //   actionFunction: () =>
-    //     txActions.swapUsingENSOAPI({
-    //       data: optimalRoute.tx.data as Hex,
-    //       to: optimalRoute.tx.to,
-    //       value: optimalRoute.tx.value as string,
-    //       gas: optimalRoute.gas.toString(),
-    //     }),
-    //   onSuccessCallback: (tx) => {
-    //     if (tx.type === TxType.swapUsingENSOAPI) {
-    //       setIsExchangeSuccess(true);
-    //       setExchangeTx(tx);
-    //     }
+    // TODO: remove after testing
+    // setIsExchangeSuccess(true);
+    // setExchangeTx({
+    //   type: TxType.exchangeUsingENSOAPI,
+    //   adapter: OrbitAdapter.EVM,
+    //   title: ['Swapping', 'Swapped', 'Error during swap', 'Swap tx replaced'],
+    //   description: [
+    //     `You start swaping ${fromToken?.symbol} to ${toToken?.symbol}.`,
+    //     `Success. You swaped ${fromToken?.symbol} to ${toToken?.symbol}. Amount: ${fromToken?.formattedBalance}(${fromToken?.formattedUsdValue})`,
+    //     'Something went wrong during Swapping.',
+    //     'Transaction replaced. Please take a look details in your wallet.',
+    //   ],
+    //   payload: {
+    //     chainIdFrom: fromToken?.chainId ?? 1,
+    //     chainIdTo: toToken?.chainId ?? 1,
+    //     tokenAddressFrom: fromToken?.token ?? '',
+    //     tokenSymbolFrom: fromToken?.symbol ?? '',
+    //     tokenAddressTo: toToken?.token ?? '',
+    //     tokenSymbolTo: toToken?.symbol ?? '',
+    //     fromAmount: fromAmount ?? '0',
+    //     toAmount: toAmount ?? '0',
     //   },
-    //   params: {
-    //     type: TxType.swapUsingENSOAPI,
-    //     adapter: OrbitAdapter.EVM,
-    //     desiredChainID: chainIdForApprove,
-    //     title: ['Swapping', 'Swapped', 'Error during swap', 'Swap tx replaced'],
-    //     description: [
-    //       `You start swaping ${fromToken?.symbol} to ${toToken?.symbol}.`,
-    //       `Success. You swaped ${fromToken?.symbol} to ${toToken?.symbol}. Amount: ${toAmount} ($${Number(toAmount) * Number(toTokenPrice ?? 0)})`,
-    //       'Something went wrong during Swapping.',
-    //       'Transaction replaced. Please take a look details in your wallet.',
-    //     ],
-    //     payload: {
-    //       chainIdFrom: fromToken?.chainId,
-    //       chainIdTo: toToken?.chainId,
-    //       tokenAddressFrom: fromToken?.token,
-    //       tokenSymbolFrom: fromToken?.symbol,
-    //       tokenAddressTo: toToken?.token,
-    //       tokenSymbolTo: toToken?.symbol,
-    //       fromAmount: fromAmount,
-    //       toAmount: toAmount,
-    //     },
-    //     withTrackedModal: true,
-    //   },
+    //   connectorType: 'evm:metamask',
+    //   from: '0x15cF4b7Ed91E803246f6F210cD96847CE7e84488',
+    //   tracker: TransactionTracker.Ethereum,
+    //   chainId: 1,
+    //   localTimestamp: 1767637855,
+    //   txKey: '0x961603faab8aa8ead2e6bde72419de012e17d20728c82c647e3d7f1fa1d23447',
+    //   hash: '0x961603faab8aa8ead2e6bde72419de012e17d20728c82c647e3d7f1fa1d23447',
+    //   pending: false,
+    //   isTrackedModalOpen: false,
+    //   to: '0xf75584ef6673ad213a685a1b58cc0330b8ea22cf',
+    //   input: '0x00',
+    //   value: '108499489307683',
+    //   nonce: 79,
+    //   maxFeePerGas: '253565528',
+    //   maxPriorityFeePerGas: '100000',
+    //   status: TransactionStatus.Success,
+    //   isError: false,
+    //   finishedTimestamp: 1767637895,
     // });
+
+    // 🛡️ Enhanced validation
+    if (!fromToken || !toToken || !fromAmount || !toAmount || !optimalRoute) {
+      toast.error('❌ Please select tokens and enter amounts', {
+        containerId: 'exchange',
+      });
+      return;
+    }
+
+    // Validate balance one more time before exchange
+    if (parseFloat(fromAmount) > fromToken.formattedBalance) {
+      toast.error(`💸 Insufficient balance! Available: ${fromToken.formattedBalance.toFixed(6)} ${fromToken.symbol}`, {
+        containerId: 'exchange',
+      });
+      return;
+    }
+
+    await executeTxAction({
+      actionFunction: () =>
+        txActions.swapUsingENSOAPI({
+          data: optimalRoute.tx.data as Hex,
+          to: optimalRoute.tx.to,
+          value: optimalRoute.tx.value as string,
+          gas: optimalRoute.gas.toString(),
+        }),
+      onSuccessCallback: (tx) => {
+        if (tx.type === TxType.exchangeUsingENSOAPI) {
+          setIsExchangeSuccess(true);
+          setExchangeTx(tx);
+        }
+      },
+      params: {
+        type: TxType.exchangeUsingENSOAPI,
+        adapter: OrbitAdapter.EVM,
+        desiredChainID: chainIdForApprove,
+        title: ['Swapping', 'Swapped', 'Error during swap', 'Swap tx replaced'],
+        description: [
+          `You start swaping ${fromToken?.symbol} to ${toToken?.symbol}.`,
+          `Success. You swaped ${fromToken?.symbol} to ${toToken?.symbol}. Amount: ${toAmount} ($${Number(toAmount) * Number(toTokenPrice ?? 0)})`,
+          'Something went wrong during Swapping.',
+          'Transaction replaced. Please take a look details in your wallet.',
+        ],
+        payload: {
+          chainIdFrom: fromToken?.chainId,
+          chainIdTo: toToken?.chainId,
+          tokenAddressFrom: fromToken?.token,
+          tokenSymbolFrom: fromToken?.symbol,
+          tokenAddressTo: toToken?.token,
+          tokenSymbolTo: toToken?.symbol,
+          fromAmount: fromAmount,
+          toAmount: toAmount,
+        },
+        withTrackedModal: true,
+      },
+    });
   };
 
   return (
     <div className="w-full flex justify-center items-start bg-gradient-to-br from-[var(--tuwa-bg-secondary)] to-[var(--tuwa-bg-muted)] gap-4 flex-wrap relative min-h-[calc(100dvh-65px)] pt-8">
+      {isExchangeSuccess && <Confetti recycle={false} width={window.innerWidth} height={window.innerHeight} />}
+
       {/* Token Selection Modals */}
       <>
         {/* Source Token Selector: Multi-chain support with dynamic chain selection */}

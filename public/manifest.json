@@ -1,7 +1,7 @@
 {
   "name": "TUWA x Enso Finance Demo",
   "short_name": "TUWA x Enso",
-  "description": "Wallet assets tracking and token exchange powered by TUWA SDK and Enso Finance API",
+  "description": "Wallet assets tracking and token exchange powered by TUWA and Enso Finance API",
   "iconPath": "icon0.svg",
   "icons": [
     {

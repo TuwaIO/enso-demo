@@ -6,8 +6,7 @@ import { TuwaLoader } from '@/components/TuwaLoader';
 
 export const metadata: Metadata = {
   title: 'Token Exchange | TUWA x Enso',
-  description:
-    'Exchange tokens seamlessly with optimal routing powered by Enso Finance. Get the best rates across multiple DEXs with TUWA SDK integration.',
+  description: 'Exchange tokens seamlessly with optimal routing powered by Enso Finance.',
 };
 
 export default function Exchange() {

@@ -20,7 +20,7 @@ export const txActions = {
 // Transaction types enum
 export enum TxType {
   approveENSOContact = 'approveENSOContact',
-  swapUsingENSOAPI = 'swapUsingENSOAPI',
+  exchangeUsingENSOAPI = 'exchangeUsingENSOAPI',
 }
 
 export type ApproveENSOContactTx = Transaction & {
@@ -34,8 +34,8 @@ export type ApproveENSOContactTx = Transaction & {
   };
 };
 
-export type SwapUsingENSOAPITX = Transaction & {
-  type: TxType.swapUsingENSOAPI;
+export type ExchangeUsingENSOAPITX = Transaction & {
+  type: TxType.exchangeUsingENSOAPI;
   payload: {
     chainIdFrom: number;
     chainIdTo: number;
@@ -49,4 +49,4 @@ export type SwapUsingENSOAPITX = Transaction & {
 };
 
 // Transaction union type
-export type TransactionUnion = ApproveENSOContactTx | SwapUsingENSOAPITX;
+export type TransactionUnion = ApproveENSOContactTx | ExchangeUsingENSOAPITX;

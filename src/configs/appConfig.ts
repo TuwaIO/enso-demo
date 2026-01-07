@@ -1,20 +1,7 @@
 import { createDefaultTransports, impersonated, safeSdkOptions } from '@tuwaio/satellite-evm';
 import { baseAccount, safe, walletConnect } from '@wagmi/connectors';
 import { createConfig, injected } from '@wagmi/core';
-import {
-  arbitrum,
-  arbitrumSepolia,
-  avalanche,
-  avalancheFuji,
-  base,
-  bsc,
-  Chain,
-  mainnet,
-  optimism,
-  polygon,
-  polygonZkEvm,
-  sepolia,
-} from 'viem/chains';
+import { arbitrum, avalanche, base, bsc, Chain, mainnet, optimism, polygon } from 'viem/chains';
 
 export const appConfig = {
   appName: 'Satellite EVM Test App',
@@ -34,14 +21,10 @@ export const appEVMChains = [
       },
     },
   },
-  sepolia,
   polygon,
-  polygonZkEvm,
   arbitrum,
-  arbitrumSepolia,
   optimism,
   avalanche,
-  avalancheFuji,
   base,
   bsc,
 ] as readonly [Chain, ...Chain[]];

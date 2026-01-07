@@ -1,35 +1,33 @@
-# Tuwa x Enso: The Sovereign Transaction Layer
+# TUWA x Enso: Sovereign Exchange Reference
 
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1-black)
 ![React](https://img.shields.io/badge/React-19-blue)
 
-This repository demonstrates the integration of **Tuwa's Ecosystem** (`Nova`, `Pulsar`, `Orbit`) with **Enso's Intent Engine**, creating a seamless, sovereign transaction layer for EVM networks. It serves as a reference implementation for building high-fidelity, privacy-preserving Web3 applications.
-
-> "The open source software movement... is a new form of political organization and a new mode of production." — *The Sovereign Individual*
+A high-fidelity reference implementation fusing **TUWA's Ecosystem** (`Nova`, `Pulsar`, `Orbit`) with **Enso's Intent Engine**. This codebase establishes a privacy-first, intent-centric transaction layer for EVM networks, demonstrating how to build superior Web3 interfaces without compromise.
 
 ---
 
 ## ⚡ Core Architecture
 
-This project is not just a demo; it is a **production-grade foundation** implementing the following Sovereign Architecture:
+This project serves as a **Reference Implementation** for the following Sovereign Architecture:
 
 ### 1. **Nova Connect** (Wallet Layer)
 *   **Enterprise-Grade Connectivity**: Seamless multi-chain wallet management (EVM + Solana ready).
 *   **Unified Identity**: Abstracting provider fragmentation into a cohesive user session.
 
 ### 2. **Enso Finance** (Routing Layer)
-*   **Intent-Centric Execution**: Optimal routing across 100+ DEXs and aggregators.
+*   **Intent-Centric Execution**: Optimal routing across DEXs and aggregators.
 *   **Gas Efficiency**: Smart routing that minimizes slippage and network costs.
 
 ### 3. **Pulsar Engine** (Transaction Layer)
-*   **Lifecycle Tracking**: Real-time monitoring of transaction states (Pending, Confirmed, Failed) across generic and complex flows (Safe, Gelato).
+*   **Lifecycle Tracking**: Real-time monitoring of transaction states (Pending, Confirmed, Failed).
 *   **Optimistic UI**: Immediate feedback loops for superior UX.
 
 ### 4. **Tuwa Design System** (UI Layer)
 *   **Zero-Compromise Aesthetics**: Built with **TailwindCSS v4** and `nova-uikit`.
-*   **Adaptive Components**: Accessible, and responsive.
+*   **Adaptive Components**: Accessible and responsive.
 
 ---
 
@@ -60,7 +58,9 @@ pnpm install
 
 # 3. Setup Environment
 cp .env.example .env
-# Open .env and add your WalletConnect Project ID and Gelato Key
+# REQUIRED: Open .env and add your keys:
+# - NEXT_PUBLIC_WALLET_PROJECT_ID (from walletconnect.com)
+# - ENSO_API_KEY (from enso.finance)
 ```
 
 ### Development
@@ -80,3 +80,9 @@ pnpm build
 # Start production server
 pnpm start
 ```
+
+---
+
+## License
+
+[Apache License 2.0](./LICENSE)

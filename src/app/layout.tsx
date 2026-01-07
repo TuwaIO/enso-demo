@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'TUWA x Enso Finance | Wallet Assets & Token Exchange Demo',
   description:
-    'A comprehensive demo showcasing TUWA SDK integration with Enso Finance API. Features wallet asset tracking, token exchange, and real-time portfolio management powered by Nova Connect and Pulsar Engine.',
+    'A comprehensive demo showcasing TUWA SDK integration with Enso Finance API. Features wallet asset tracking, token exchange, and real-time portfolio management.',
   keywords: [
     'TUWA',
     'Enso Finance',

@@ -53,18 +53,3 @@ export function generatePortfolioStats(tokens: SortedBalanceItem[]) {
     totalValue,
   };
 }
-
-/**
- * Log portfolio statistics to console
- *
- * @param rawCount Number of raw tokens before filtering
- * @param tokens Array of enriched token balances after filtering
- */
-export function logPortfolioStats(rawCount: number, tokens: SortedBalanceItem[]) {
-  const stats = generatePortfolioStats(tokens);
-
-  console.log(`\n✅ Filtered ${rawCount} tokens down to ${tokens.length} legitimate tokens`);
-  console.log(`- ${stats.withPrice} tokens with price > 0`);
-  console.log(`- ${stats.withValue} tokens with USD value > 0`);
-  console.log(`- Total portfolio value: $${stats.totalValue.toFixed(2)}`);
-}

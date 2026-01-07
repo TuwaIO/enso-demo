@@ -2,16 +2,17 @@ import { getChainName } from '@bgd-labs/react-web3-icons/dist/utils';
 import { ArrowTopRightOnSquareIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { ArrowDownIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { selectAdapterByKey } from '@tuwaio/orbit-core';
+import { motion } from 'framer-motion';
 
 import { TokenWithNetworkBadge } from '@/components/TokenWithNetworkBadge';
 import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 import { SortedBalanceItem } from '@/server/api/types/enso';
-import { SwapUsingENSOAPITX } from '@/transactions';
+import { ExchangeUsingENSOAPITX } from '@/transactions';
 
 interface ExchangeSuccessProps {
   fromToken: SortedBalanceItem;
   toToken: SortedBalanceItem;
-  tx: SwapUsingENSOAPITX;
+  tx: ExchangeUsingENSOAPITX;
   onClose: () => void;
 }
 
@@ -29,10 +30,57 @@ export function ExchangeSuccess({ fromToken, toToken, tx, onClose }: ExchangeSuc
       {/* Success Icon */}
       <div className="flex justify-center">
         <div className="relative">
-          <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-          <div className="relative w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircleIcon className="w-12 h-12 text-green-500" />
-          </div>
+          {/* Пульсирующие кольца */}
+          <motion.div
+            className="absolute inset-0 bg-green-500/20 rounded-full"
+            animate={{
+              scale: [1, 1.5, 1.8],
+              opacity: [0.5, 0.3, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeOut',
+            }}
+          />
+          <motion.div
+            className="absolute inset-0 bg-green-500/20 rounded-full"
+            animate={{
+              scale: [1, 1.5, 1.8],
+              opacity: [0.5, 0.3, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeOut',
+              delay: 0.4,
+            }}
+          />
+
+          {/* Иконка с масштабированием */}
+          <motion.div
+            className="relative w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{
+              type: 'spring',
+              stiffness: 200,
+              damping: 15,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 200,
+                damping: 20,
+                delay: 0.1,
+              }}
+            >
+              <CheckCircleIcon className="w-12 h-12 text-green-500" />
+            </motion.div>
+          </motion.div>
         </div>
       </div>
 
