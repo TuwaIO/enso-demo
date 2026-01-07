@@ -90,7 +90,7 @@ function CardHeader({ title, subtitle, icon, address, onCopyAddress, isCopied = 
   const totalBalanceUSD = calculateTotalBalance();
 
   return (
-    <div className="bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] p-6">
+    <div className="bg-gradient-to-r from-[var(--tuwa-button-gradient-from)] to-[var(--tuwa-button-gradient-to)] p-4 sm:p-6">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 p-2 rounded-full bg-white/20">{icon}</div>
@@ -203,7 +203,7 @@ export function WalletAssetsCard({
       )}
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-2 sm:p-4">
         <AssetsList assets={assets} isLoading={isLoading} error={error} />
       </div>
     </CardContainer>
