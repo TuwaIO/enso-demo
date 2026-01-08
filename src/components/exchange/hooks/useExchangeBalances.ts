@@ -17,7 +17,7 @@ export function useExchangeBalances({
   destinationChainId,
 }: UseExchangeBalancesProps) {
   // Fetch balances for wallet chain
-  const { data: walletChainBalances } = api.enso.getWalletBalances.useQuery(
+  const { data: walletChainBalances, refetch: refetchWalletChain } = api.enso.getWalletBalances.useQuery(
     {
       address: walletAddress,
       chainId: walletChainId,
@@ -30,7 +30,7 @@ export function useExchangeBalances({
   );
 
   // Fetch balances for from chain (if different from wallet chain)
-  const { data: fromChainBalances } = api.enso.getWalletBalances.useQuery(
+  const { data: fromChainBalances, refetch: refetchFromChain } = api.enso.getWalletBalances.useQuery(
     {
       address: walletAddress,
       chainId: fromChainId,
@@ -43,7 +43,7 @@ export function useExchangeBalances({
   );
 
   // Fetch balances for destination chain (if different from others)
-  const { data: destinationChainBalances } = api.enso.getWalletBalances.useQuery(
+  const { data: destinationChainBalances, refetch: refetchDestinationChain } = api.enso.getWalletBalances.useQuery(
     {
       address: walletAddress,
       chainId: destinationChainId,
@@ -93,8 +93,34 @@ export function useExchangeBalances({
     [allBalances],
   );
 
+  // Refetch all balances
+  const refetchBalances = useCallback(async () => {
+    if (walletAddress) {
+      const promises = [refetchWalletChain()];
+
+      if (fromChainId !== walletChainId) {
+        promises.push(refetchFromChain());
+      }
+
+      if (destinationChainId !== walletChainId && destinationChainId !== fromChainId) {
+        promises.push(refetchDestinationChain());
+      }
+
+      await Promise.all(promises);
+    }
+  }, [
+    walletAddress,
+    refetchWalletChain,
+    refetchFromChain,
+    refetchDestinationChain,
+    fromChainId,
+    destinationChainId,
+    walletChainId,
+  ]);
+
   return {
     allBalances,
     getBalancesForChain,
+    refetchBalances,
   };
 }

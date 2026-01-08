@@ -8,7 +8,6 @@ export type GenericTxAction = {
   data: Hex;
   to: Hex;
   value?: string;
-  gas?: string;
 };
 
 // Transaction actions will be defined here

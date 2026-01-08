@@ -82,6 +82,7 @@ export default function ExchangePage() {
     setDestinationChainId(initialChainId);
     setIsSelectingFromToken(false);
     setIsSelectingToToken(false);
+    void refetchBalances();
   };
 
   // 🔄 Initialize chain IDs on wallet connection
@@ -98,7 +99,7 @@ export default function ExchangePage() {
   }, [activeConnection?.address]);
 
   // Fetch and manage balances using custom hook
-  const { getBalancesForChain } = useExchangeBalances({
+  const { getBalancesForChain, refetchBalances } = useExchangeBalances({
     walletAddress,
     walletChainId,
     fromChainId,
@@ -330,7 +331,7 @@ export default function ExchangePage() {
         title: ['Approving', 'Approved', 'Error during approval', 'Approve tx replaced'],
         description: [
           `You can swap ${fromToken?.symbol} to ${toToken?.symbol} after approve.`,
-          `Success. You approve ${fromToken?.symbol}. Amount: ${toAmount}($${Number(toAmount) * Number(toTokenPrice ?? '0')}). Spender: ${approvalData.spender}`,
+          `Success. You approve ${fromToken?.symbol}. Amount: ${toAmount}($${Number(toAmount) * Number(toTokenPrice ?? '0')}).`,
           'Something went wrong during approval.',
           'Transaction replaced. Please take a look details in your wallet.',
         ],
@@ -448,12 +449,12 @@ export default function ExchangePage() {
           data: optimalRoute.tx.data as Hex,
           to: optimalRoute.tx.to,
           value: optimalRoute.tx.value as string,
-          gas: optimalRoute.gas.toString(),
         }),
       onSuccessCallback: (tx) => {
         if (tx.type === TxType.exchangeUsingENSOAPI) {
           setIsExchangeSuccess(true);
           setExchangeTx(tx);
+          void refetchBalances();
         }
       },
       params: {
@@ -484,7 +485,9 @@ export default function ExchangePage() {
 
   return (
     <div className="w-full flex justify-center items-start bg-gradient-to-br from-[var(--tuwa-bg-secondary)] to-[var(--tuwa-bg-muted)] gap-4 flex-wrap relative min-h-[calc(100dvh-65px)] pt-8">
-      {isExchangeSuccess && <Confetti recycle={false} width={window.innerWidth} height={window.innerHeight} />}
+      {isExchangeSuccess && (
+        <Confetti recycle={false} width={window.innerWidth - 20} height={window.innerHeight - 200} />
+      )}
 
       {/* Token Selection Modals */}
       <>
@@ -574,8 +577,6 @@ export default function ExchangePage() {
               isErrorRoute={isErrorRoute}
               walletConnected={!!walletAddress}
               route={optimalRoute?.route}
-              gas={optimalRoute?.gas}
-              gasPrice={optimalRoute?.gasPrice}
               nativeCurrency={optimalRoute?.nativeCurrency}
               minAmountOut={optimalRoute?.minAmountOut}
               priceImpact={optimalRoute?.priceImpact != null ? Number(optimalRoute.priceImpact) : undefined}

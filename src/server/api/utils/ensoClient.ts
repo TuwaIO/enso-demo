@@ -141,7 +141,7 @@ export async function getOptimalRoute(params: {
       destinationChainId: destinationChainId || chainId,
       fromAddress: fromAddress as Address,
       receiver: (receiver as Address) ?? (fromAddress as Address),
-      spender: fromAddress as Address, // User needs to approve the router
+      spender: fromAddress as Address,
       routingStrategy: 'router',
       slippage: slippageBps.toString(),
     });
@@ -154,8 +154,6 @@ export async function getOptimalRoute(params: {
       });
     }
 
-    const viemClient = createViemClient(chainId, appEVMChains);
-    const gasPrice = Number((await viemClient?.getGasPrice()) ?? 0);
     const nativeCurrency = await ensoClient.getPriceData({
       chainId,
       address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
@@ -208,8 +206,6 @@ export async function getOptimalRoute(params: {
       toAmount: routeResponse.amountOut,
       route: updatedRoutes, // Route for displaying steps
       tx: routeResponse.tx, // Transaction data
-      gasPrice: gasPrice,
-      gas: routeResponse.gas, // Gas estimate
       createdAt: routeResponse.createdAt,
       nativeCurrency,
     };

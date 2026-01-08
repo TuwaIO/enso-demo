@@ -23,9 +23,6 @@ export function ExchangeForm({
   isErrorRoute,
   walletConnected,
   route,
-  gas,
-  gasPrice,
-  nativeCurrency,
   minAmountOut,
   priceImpact,
   onFromAmountChange,
@@ -133,9 +130,6 @@ export function ExchangeForm({
               fromAmount={fromAmount}
               toAmount={toAmount}
               isLoading={isLoadingRoute}
-              gas={gas}
-              gasPrice={gasPrice}
-              nativeCurrency={nativeCurrency}
             />
           </div>
 

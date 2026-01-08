@@ -5,8 +5,6 @@ import { Hop, SortedBalanceItem } from '@/server/api/types/enso';
 
 export interface ExchangeRouteData {
   route?: Hop[];
-  gas?: number | string;
-  gasPrice?: number | string;
   nativeCurrency?: PriceData;
   minAmountOut?: string;
   priceImpact?: number;

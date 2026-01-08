@@ -23,33 +23,3 @@ export function enrichTokens(tokens: BalanceItem[]): SortedBalanceItem[] {
     };
   });
 }
-
-/**
- * Calculate total portfolio value from token balances
- *
- * @param tokens Array of enriched token balances
- * @returns Total portfolio value in USD
- */
-export function calculatePortfolioValue(tokens: SortedBalanceItem[]): number {
-  return tokens.reduce((sum, token) => sum + token.usdValue, 0);
-}
-
-/**
- * Generate portfolio statistics
- *
- * @param tokens Array of enriched token balances
- * @returns Object containing portfolio statistics
- */
-export function generatePortfolioStats(tokens: SortedBalanceItem[]) {
-  const totalTokens = tokens.length;
-  const withPrice = tokens.filter((t) => t.price > 0).length;
-  const withValue = tokens.filter((t) => t.usdValue > 0).length;
-  const totalValue = calculatePortfolioValue(tokens);
-
-  return {
-    totalTokens,
-    withPrice,
-    withValue,
-    totalValue,
-  };
-}

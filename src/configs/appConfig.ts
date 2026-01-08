@@ -4,11 +4,11 @@ import { createConfig, injected } from '@wagmi/core';
 import { arbitrum, avalanche, base, bsc, Chain, mainnet, optimism, polygon } from 'viem/chains';
 
 export const appConfig = {
-  appName: 'Satellite EVM Test App',
-  appDescription: 'TUWA Demo App',
+  appName: 'TUWA x ENSO Dapp',
+  appDescription: 'TUWA x ENSO Demo App',
   projectId: process.env.NEXT_PUBLIC_WALLET_PROJECT_ID ?? '9077e559e63e099f496b921a027d0f04',
   appLogoUrl: 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/preview-logo.png',
-  appUrl: process.env.NODE_ENV === 'development' ? 'http://localhost:3000/' : 'https://demo.tuwa.io/',
+  appUrl: process.env.NODE_ENV === 'development' ? 'http://localhost:3000/' : 'https://enso-demo.tuwa.io/',
 };
 
 export const appEVMChains = [
