@@ -54,8 +54,8 @@ importers:
         specifier: ^11.8.1
         version: 11.8.1(typescript@5.9.3)
       '@tuwaio/nova-connect':
-        specifier: ^0.2.6
-        version: 0.2.6(eb899adee378845b04d408e6597e2afd)
+        specifier: ^0.2.7
+        version: 0.2.7(eb899adee378845b04d408e6597e2afd)
       '@tuwaio/nova-core':
         specifier: ^0.2.3
         version: 0.2.3(@radix-ui/react-dialog@1.1.15(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(clsx@2.1.1)(framer-motion@12.23.28(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(tailwind-merge@3.4.0)
@@ -1669,8 +1669,8 @@ packages:
     peerDependencies:
       typescript: '>=5.7.2'
 
-  '@tuwaio/nova-connect@0.2.6':
-    resolution: {integrity: sha512-pwdwNfgA1VUXGTKg8gTt3/PUrsUD8GdoWtIHJ3rbvRPmum2HubWPOAsoBuOH4fRMkMI91xpJZmLnivM3Cmv4qw==}
+  '@tuwaio/nova-connect@0.2.7':
+    resolution: {integrity: sha512-S4PVj3qx8b+WFboLQJn5IbSDq2/nBBR5vzEXbkRN8yRsJ1aEL55qQXlCZ6boDHaoUkP3W9xr/jya18YtXqGN2Q==}
     peerDependencies:
       '@bgd-labs/react-web3-icons': '>=1.5'
       '@emotion/is-prop-valid': 1.x.x
@@ -5497,7 +5497,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  '@tuwaio/nova-connect@0.2.6(eb899adee378845b04d408e6597e2afd)':
+  '@tuwaio/nova-connect@0.2.7(eb899adee378845b04d408e6597e2afd)':
     dependencies:
       '@bgd-labs/react-web3-icons': 1.58.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@emotion/is-prop-valid': 1.4.0
